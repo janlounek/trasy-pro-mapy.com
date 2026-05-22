@@ -1,6 +1,8 @@
 # mapy-for-chrome-backend
 
-Cloudflare Worker + D1 backend for sharing Mapy for Chrome routes between users.
+Cloudflare Worker + D1 backend for sharing **Trasy pro mapy.com** routes
+between users. (Internal slug remains `mapy-for-chrome-backend` for stability
+of the workers.dev URL and existing OAuth redirect URI.)
 
 ## One-time setup
 

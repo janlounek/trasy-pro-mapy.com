@@ -7,7 +7,7 @@
 // re-clicking every waypoint.
 
 const SOURCE = 'mfc-mainworld';
-const TAG = '[Mapy+ mainworld]';
+const TAG = '[Trasy mainworld]';
 
 // Verbose POST logging — off by default to avoid console spam during pans.
 // Enable from DevTools: __mfcDebugAllPosts(true)

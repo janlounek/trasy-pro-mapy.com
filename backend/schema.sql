@@ -1,4 +1,4 @@
--- Mapy for Chrome — shared-routes schema (Cloudflare D1 / SQLite)
+-- Trasy pro mapy.com — shared-routes schema (Cloudflare D1 / SQLite)
 
 CREATE TABLE IF NOT EXISTS shared_routes (
   id TEXT PRIMARY KEY,

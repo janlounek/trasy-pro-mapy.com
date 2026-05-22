@@ -1,17 +1,17 @@
-# Mapy for Chrome — Privacy Policy
+# Trasy pro mapy.com — Privacy Policy
 
 _Last updated: 2026-05-22_
 
-This Chrome extension ("Mapy for Chrome", "the extension") is provided by Jan
-Lounek (the "developer"). This page explains what information the extension
-collects, where it goes, and how to remove it.
+This Chrome extension ("Trasy pro mapy.com", "the extension") is provided by
+Jan Lounek (the "developer"). This page explains what information the
+extension collects, where it goes, and how to remove it.
 
 If you want your data deleted or have any question, contact
 **jan.lounek@etnetera.cz**.
 
 ## 1. What the extension does
 
-Mapy for Chrome lets you save your own hiking, cycling, and walking routes on
+Trasy pro mapy.com lets you save your own hiking, cycling, and walking routes on
 [mapy.com](https://mapy.com) and — optionally — publish them to a small
 community pool that other users of the extension can browse.
 

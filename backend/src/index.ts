@@ -1,5 +1,5 @@
 /**
- * Mapy for Chrome — shared routes backend (Cloudflare Worker + D1).
+ * Trasy pro mapy.com — shared-routes backend (Cloudflare Worker + D1).
  *
  * Endpoints:
  *   GET    /v1/routes              List every shared route (public).

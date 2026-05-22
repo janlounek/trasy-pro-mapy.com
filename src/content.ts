@@ -552,7 +552,7 @@ function wirePhotoEditor(
           const dataUrl = await resizeImageFile(f);
           target.photos.push(dataUrl);
         } catch (err) {
-          console.warn('[Mapy+] photo resize failed', err);
+          console.warn('[Trasy] photo resize failed', err);
         }
       }
     } finally {
@@ -1566,7 +1566,7 @@ async function castVoteUi(community: SharedRoute, action: 'like' | 'dislike'): P
       community.dislikeCount = prevSnapshot.dislikeCount;
       community.myVote = prevSnapshot.myVote;
       renderPopup();
-      console.warn('[Mapy+] vote failed:', resp.error);
+      console.warn('[Trasy] vote failed:', resp.error);
       return;
     }
     // Sync against authoritative server counts.
@@ -1579,7 +1579,7 @@ async function castVoteUi(community: SharedRoute, action: 'like' | 'dislike'): P
     community.dislikeCount = prevSnapshot.dislikeCount;
     community.myVote = prevSnapshot.myVote;
     renderPopup();
-    console.warn('[Mapy+] vote error:', err);
+    console.warn('[Trasy] vote error:', err);
   }
 }
 

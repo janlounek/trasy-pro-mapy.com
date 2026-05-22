@@ -57,10 +57,10 @@ async function refresh(): Promise<void> {
 function render(): void {
   if (!state.user) {
     app.innerHTML = `
-      <header><h1>Mapy for Chrome</h1></header>
+      <header><h1>Trasy pro mapy.com</h1></header>
       <section>
-        <p class="empty">Log in with Seznam to start saving routes.</p>
-        <button id="login">Log in with Seznam</button>
+        <p class="empty">Přihlas se přes Seznam pro ukládání tras.</p>
+        <button id="login">Přihlásit přes Seznam</button>
         <p id="err" class="error"></p>
       </section>
     `;
@@ -72,7 +72,7 @@ function render(): void {
   // know they're authenticated, not who they are by name.
   app.innerHTML = `
     <header>
-      <h1>Mapy for Chrome</h1>
+      <h1>Trasy pro mapy.com</h1>
       <div>
         <span class="user">Přihlášen</span>
         <button id="logout" class="secondary">Odhlásit</button>
@@ -80,13 +80,14 @@ function render(): void {
     </header>
     <section>
       <p class="hint">
-        To add a new route, open <a href="https://mapy.com" target="_blank">mapy.com</a>,
-        click the <strong>Mapy+</strong> button on the right edge of the map,
-        then <strong>+ New route</strong>.
+        Pro přidání nové trasy otevři
+        <a href="https://mapy.com" target="_blank">mapy.com</a>, klikni na
+        tlačítko <strong>Trasy</strong> v horní liště nad mapou a vyber
+        <strong>+ Nová trasa</strong>.
       </p>
       ${
         state.routes.length === 0
-          ? `<p class="empty">No saved routes yet.</p>`
+          ? `<p class="empty">Zatím nemáš žádné uložené trasy.</p>`
           : `<ul class="routes">${state.routes.map(routeItem).join('')}</ul>`
       }
     </section>

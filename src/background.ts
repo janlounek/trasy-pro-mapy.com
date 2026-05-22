@@ -115,7 +115,7 @@ async function syncUploadShared(route: SavedRoute): Promise<void> {
   try {
     await uploadSharedRoute(route, token);
   } catch (err) {
-    console.warn('[Mapy+] uploadSharedRoute failed:', err);
+    console.warn('[Trasy] uploadSharedRoute failed:', err);
   }
 }
 
@@ -127,7 +127,7 @@ async function syncDeleteShared(routeId: string): Promise<void> {
   try {
     await deleteSharedRoute(routeId, token);
   } catch (err) {
-    console.warn('[Mapy+] deleteSharedRoute failed:', err);
+    console.warn('[Trasy] deleteSharedRoute failed:', err);
   }
 }
 
@@ -142,7 +142,7 @@ async function refreshCommunityRoutesCache(): Promise<SharedRoute[]> {
     await chrome.storage.local.set({ communityRoutes: routes });
     return routes;
   } catch (err) {
-    console.warn('[Mapy+] refreshCommunityRoutesCache failed:', err);
+    console.warn('[Trasy] refreshCommunityRoutesCache failed:', err);
     return [];
   }
 }

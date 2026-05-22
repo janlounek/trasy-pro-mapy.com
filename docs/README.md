@@ -1,4 +1,4 @@
-# Mapy for Chrome — public site
+# Trasy pro mapy.com — public site
 
 This folder is the source of the public GitHub Pages site:
 
