@@ -93,15 +93,30 @@ interface ElevationResult {
 /**
  * Return a usable access token, refreshing if the stored one has expired
  * (within a 60 second skew). Returns null if no auth is stored or refresh fails.
+ *
+ * Side effect: if auth is missing or unrefreshable but a `user` record still
+ * exists in storage.local, we clear it. Tokens live in storage.session (cleared
+ * on extension reload / browser restart) while the user record persists, so
+ * without this the popup would keep showing "logged in" even though every
+ * authenticated action would silently fail.
  */
 async function ensureAccessToken(): Promise<string | null> {
   const auth = await getAuth();
-  if (!auth) return null;
+  if (!auth) {
+    const u = await getUser();
+    if (u) {
+      console.warn('[Trasy] auth tokens missing but user record present — clearing stale session');
+      await setUser(null);
+    }
+    return null;
+  }
   const now = Math.floor(Date.now() / 1000);
   if (auth.expiresAt > now + 60) return auth.accessToken;
   const refreshed = await refreshAccessToken(auth.refreshToken);
   if (!refreshed) {
+    console.warn('[Trasy] refresh token rejected — clearing session');
     await setAuth(null);
+    await setUser(null);
     return null;
   }
   await setAuth(refreshed);
@@ -112,7 +127,10 @@ async function ensureAccessToken(): Promise<string | null> {
 async function syncUploadShared(route: SavedRoute): Promise<void> {
   if (!isBackendConfigured()) return;
   const token = await ensureAccessToken();
-  if (!token) return;
+  if (!token) {
+    console.warn('[Trasy] syncUploadShared skipped: no access token (user needs to re-login)');
+    return;
+  }
   try {
     await uploadSharedRoute(route, token);
   } catch (err) {
@@ -124,7 +142,10 @@ async function syncUploadShared(route: SavedRoute): Promise<void> {
 async function syncDeleteShared(routeId: string): Promise<void> {
   if (!isBackendConfigured()) return;
   const token = await ensureAccessToken();
-  if (!token) return;
+  if (!token) {
+    console.warn('[Trasy] syncDeleteShared skipped: no access token (user needs to re-login)');
+    return;
+  }
   try {
     await deleteSharedRoute(routeId, token);
   } catch (err) {
@@ -393,6 +414,16 @@ async function handle(msg: Msg): Promise<unknown> {
     }
     case 'getUser': {
       const u = await getUser();
+      if (!u) return { ok: true, user: null };
+      // The user record lives in storage.local and survives extension reload,
+      // but auth tokens live in storage.session and don't. If tokens are gone
+      // we are effectively logged out — clear the stale user so the popup
+      // shows the re-login prompt instead of pretending we're authenticated.
+      const auth = await getAuth();
+      if (!auth) {
+        await setUser(null);
+        return { ok: true, user: null };
+      }
       return { ok: true, user: u };
     }
     case 'addRoute': {
