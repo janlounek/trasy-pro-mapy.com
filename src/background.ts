@@ -209,7 +209,10 @@ async function safeElevationStats(polyline: LonLat[]): Promise<ElevationResult> 
       sampled.push(polyline[idx]);
     }
     const elevs = await fetchElevation(sampled);
-    if (elevs.length < 2) return {};
+    if (elevs.length < 2) {
+      console.warn('[Trasy] elevation: <2 points returned, profile skipped');
+      return {};
+    }
 
     const cum = cumulativeDistances(polyline);
     const profile: ElevationPoint[] = [];
@@ -221,8 +224,11 @@ async function safeElevationStats(polyline: LonLat[]): Promise<ElevationResult> 
     }
     const stats = elevationGainLoss(elevs.map((e) => e.elevation));
     return { gainM: stats.gainM, lossM: stats.lossM, profile };
-  } catch {
-    return {}; // best-effort
+  } catch (err) {
+    // Surface this — silent failure was making the missing elevation chart
+    // impossible to diagnose from the UI side.
+    console.warn('[Trasy] elevation lookup failed:', err);
+    return {};
   }
 }
 

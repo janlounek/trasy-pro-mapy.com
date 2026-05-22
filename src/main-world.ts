@@ -462,3 +462,38 @@ window.addEventListener('message', (e: MessageEvent) => {
 });
 
 console.log(TAG, 'loaded; fetch hook active');
+
+// Proactive probes. The fetch hook only fires when the page actually requests
+// route data — for a saved-route URL the SPA may resolve it through internal
+// state or a request URL that doesn't match our pattern. Walking window.Mapy /
+// SMap at several offsets after load catches those cases without forcing the
+// user to reload.
+setTimeout(runProbe, 2000);
+setTimeout(runProbe, 5000);
+setTimeout(runProbe, 10000);
+setTimeout(runProbe, 20000);
+
+// Same again after every SPA route change. mapy.com pushes URL state without
+// reloading, so a fresh probe per navigation catches routes opened by clicking
+// a different saved item in the side panel. We hook history.pushState /
+// replaceState rather than polling so we don't burn cycles on every DOM mutation.
+function onNavigation(): void {
+  // Reset the "longest wins" guard so a new route can replace the old one.
+  lastCaptured = null;
+  setTimeout(runProbe, 800);
+  setTimeout(runProbe, 2500);
+  setTimeout(runProbe, 6000);
+}
+const origPush = history.pushState.bind(history);
+const origReplace = history.replaceState.bind(history);
+history.pushState = function (...args: Parameters<History['pushState']>) {
+  const r = origPush(...args);
+  onNavigation();
+  return r;
+};
+history.replaceState = function (...args: Parameters<History['replaceState']>) {
+  const r = origReplace(...args);
+  onNavigation();
+  return r;
+};
+window.addEventListener('popstate', onNavigation);
