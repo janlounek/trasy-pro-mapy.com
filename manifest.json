@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Mapy for Chrome",
+  "version": "0.1.0",
+  "description": "Collect Mapy.cz share-URLs and overlay your routes on mapy.com",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyzPTozAWYdULIinbkY1Y/4CJQy5b0+9Y1FNW46yYIdO4BbGg0xaXws2ID/I2iNvwNsn7LHfpBwir775wC6tdphFzQbS4BlrLVq28TO3vh3vbO4jAai7YqEfs4AhPelG4o6Q5/io4tbU+mFG1Hx1lWbiJOFb8h7196hZkicN3D/ycoOLRkT2QUCtHtHF7GsK6lZfs+Te0NWnU8y/8GEaQ9N63Uc6yEo8l12QOH+z2AcLro0X27w6JYRGM2cgRzelpWrKBNjq+bg2ZmtjrvOJCT2JWWF1iswyYNiiDa/25zgKYW6TsYETw8/+H/GRbaVy3Tt7K60DHQ0aH24bbtiH2wQIDAQAB",
+  "permissions": ["identity", "storage", "unlimitedStorage", "alarms"],
+  "host_permissions": [
+    "https://api.mapy.com/*",
+    "https://login.szn.cz/*",
+    "https://*.mapy.com/*",
+    "https://*.mapy.cz/*",
+    "https://mapy-for-chrome-backend.trasypromapy.workers.dev/*"
+  ],
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Mapy for Chrome"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.mapy.com/*", "https://*.mapy.cz/*"],
+      "js": ["src/main-world.ts"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://*.mapy.com/*", "https://*.mapy.cz/*"],
+      "js": ["src/content.ts"],
+      "run_at": "document_idle"
+    }
+  ]
+}

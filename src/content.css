@@ -1,0 +1,1307 @@
+/* =========================================================================
+   Mapy+ extension — content script UI
+   Design language: clean & minimalistic, white surfaces, subtle shadows,
+   line icons, one bold accent color (#1EAE00, mapy.com's brand green).
+   ========================================================================= */
+
+#mapy-for-chrome-root,
+#mapy-for-chrome-popup {
+  /* Color tokens */
+  --mfc-bg: #ffffff;
+  --mfc-bg-subtle: #fafafa;
+  --mfc-bg-hover: #f5f6f7;
+  --mfc-fg: #1a1d21;
+  --mfc-fg-muted: #5e6772;
+  --mfc-fg-soft: #98a0a8;
+  --mfc-border: #ececef;
+  --mfc-border-strong: #d4d8dd;
+  --mfc-primary: #1f5132;
+  --mfc-primary-hover: #173d26;
+  --mfc-primary-soft: rgba(31, 81, 50, 0.12);
+  --mfc-danger: #d9534f;
+  --mfc-danger-hover: #c43e3b;
+  --mfc-danger-soft: rgba(217, 83, 79, 0.10);
+
+  /* Subtle, layered shadows */
+  --mfc-shadow-sm: 0 1px 2px rgba(15, 20, 30, 0.06), 0 1px 1px rgba(15, 20, 30, 0.03);
+  --mfc-shadow-md: 0 2px 8px rgba(15, 20, 30, 0.08), 0 1px 3px rgba(15, 20, 30, 0.04);
+  --mfc-shadow-lg: 0 12px 32px rgba(15, 20, 30, 0.14), 0 2px 6px rgba(15, 20, 30, 0.06);
+
+  /* Typography */
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'SF Pro Text',
+    system-ui,
+    sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--mfc-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================ Trasy launcher (top of the map) ================ */
+
+#mapy-for-chrome-root {
+  position: fixed;
+  top: 14px;
+  left: 500px;
+  z-index: 100000;
+}
+
+#mapy-for-chrome-root .mfc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--mfc-bg);
+  color: var(--mfc-fg);
+  border: 1px solid var(--mfc-border);
+  border-radius: 12px;
+  padding: 10px 16px 10px 14px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  box-shadow: var(--mfc-shadow-md);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+#mapy-for-chrome-root .mfc-toggle:hover {
+  background: var(--mfc-bg-hover);
+  box-shadow: var(--mfc-shadow-lg);
+}
+
+#mapy-for-chrome-root .mfc-toggle:active {
+  transform: translateY(0.5px);
+}
+
+#mapy-for-chrome-root .mfc-toggle svg {
+  color: var(--mfc-primary);
+  flex-shrink: 0;
+}
+
+/* ================ Side panel ================ */
+
+#mapy-for-chrome-root .mfc-panel {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  width: 340px;
+  max-height: 78vh;
+  overflow-y: auto;
+  background: var(--mfc-bg);
+  border: 1px solid var(--mfc-border);
+  border-radius: 12px;
+  box-shadow: var(--mfc-shadow-lg);
+  padding: 14px 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mfc-border-strong) transparent;
+}
+
+#mapy-for-chrome-root .mfc-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+#mapy-for-chrome-root .mfc-panel::-webkit-scrollbar-thumb {
+  background-color: var(--mfc-border-strong);
+  border-radius: 4px;
+}
+
+#mapy-for-chrome-root.mfc-collapsed .mfc-panel {
+  display: none;
+}
+
+/* Header */
+
+#mapy-for-chrome-root .mfc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--mfc-border);
+}
+
+#mapy-for-chrome-root .mfc-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+#mapy-for-chrome-root .mfc-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--mfc-bg-hover);
+  color: var(--mfc-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#mapy-for-chrome-root .mfc-master {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--mfc-fg-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+#mapy-for-chrome-root .mfc-master input {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--mfc-primary);
+}
+
+/* ================ Buttons ================ */
+
+#mapy-for-chrome-root .mfc-primary,
+#mapy-for-chrome-root .mfc-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+  margin-top: 8px;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+#mapy-for-chrome-root .mfc-primary {
+  background: var(--mfc-primary);
+  color: #ffffff;
+  border-color: var(--mfc-primary);
+  box-shadow: var(--mfc-shadow-sm);
+}
+
+#mapy-for-chrome-root .mfc-primary:hover:not(:disabled) {
+  background: var(--mfc-primary-hover);
+  border-color: var(--mfc-primary-hover);
+  box-shadow: var(--mfc-shadow-md);
+}
+
+#mapy-for-chrome-root .mfc-primary:disabled {
+  background: var(--mfc-border);
+  border-color: var(--mfc-border);
+  color: #ffffff;
+  cursor: default;
+  box-shadow: none;
+}
+
+#mapy-for-chrome-root .mfc-secondary {
+  background: var(--mfc-bg);
+  color: var(--mfc-fg);
+  border-color: var(--mfc-border-strong);
+}
+
+#mapy-for-chrome-root .mfc-secondary:hover:not(:disabled) {
+  background: var(--mfc-bg-hover);
+}
+
+#mapy-for-chrome-root .mfc-secondary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+#mapy-for-chrome-root .mfc-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--mfc-fg-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+#mapy-for-chrome-root .mfc-iconbtn:hover {
+  background: var(--mfc-bg-hover);
+  color: var(--mfc-fg);
+}
+
+#mapy-for-chrome-root .mfc-iconbtn-danger:hover {
+  background: var(--mfc-danger-soft);
+  color: var(--mfc-danger);
+}
+
+/* ================ Toolbar (new route + new folder buttons) ================ */
+
+#mapy-for-chrome-root .mfc-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+#mapy-for-chrome-root .mfc-toolbar .mfc-secondary {
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+/* ================ Folders ================ */
+
+#mapy-for-chrome-root .mfc-folder {
+  margin-top: 10px;
+}
+
+#mapy-for-chrome-root .mfc-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: default;
+  user-select: none;
+}
+
+#mapy-for-chrome-root .mfc-folder-header:hover {
+  background: var(--mfc-bg-subtle);
+}
+
+#mapy-for-chrome-root .mfc-folder-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: var(--mfc-fg-muted);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.12s ease;
+}
+
+#mapy-for-chrome-root .mfc-folder-chevron:hover {
+  color: var(--mfc-fg);
+}
+
+/* Default chevron points right (collapsed look); rotate to ▼ when expanded. */
+#mapy-for-chrome-root .mfc-folder:not(.mfc-folder-collapsed) .mfc-folder-chevron {
+  transform: rotate(90deg);
+}
+
+#mapy-for-chrome-root .mfc-folder-chevron-placeholder {
+  display: inline-block;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-root .mfc-folder-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mfc-primary);
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-root .mfc-folder-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--mfc-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#mapy-for-chrome-root .mfc-folder-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--mfc-bg-hover);
+  color: var(--mfc-fg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#mapy-for-chrome-root .mfc-folder-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+#mapy-for-chrome-root .mfc-folder-header:hover .mfc-folder-actions,
+#mapy-for-chrome-root .mfc-folder-header:focus-within .mfc-folder-actions {
+  opacity: 1;
+}
+
+#mapy-for-chrome-root .mfc-folder-list {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 0 16px;
+  display: grid;
+  gap: 2px;
+  border-left: 1px solid var(--mfc-border);
+  padding-left: 4px;
+}
+
+#mapy-for-chrome-root .mfc-folder-empty {
+  margin: 4px 0 0 20px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--mfc-fg-soft);
+  font-style: italic;
+}
+
+#mapy-for-chrome-root .mfc-folder-unfiled {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--mfc-border);
+}
+
+#mapy-for-chrome-root .mfc-folder-unfiled .mfc-folder-name {
+  color: var(--mfc-fg-muted);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ================ Community section ================ */
+
+#mapy-for-chrome-root .mfc-community {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mfc-border);
+}
+
+#mapy-for-chrome-root .mfc-community-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+#mapy-for-chrome-root .mfc-community-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--mfc-fg);
+}
+
+#mapy-for-chrome-root .mfc-community-empty {
+  font-size: 12px;
+  color: var(--mfc-fg-soft);
+  padding: 10px 4px;
+  font-style: italic;
+}
+
+#mapy-for-chrome-root .mfc-community-owner-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--mfc-primary-soft);
+  color: var(--mfc-primary);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* Slight visual differentiation for popup of someone else's shared route */
+#mapy-for-chrome-popup .mfc-popup-community .mfc-popup-accent {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--mfc-route-color, var(--mfc-primary)),
+    var(--mfc-route-color, var(--mfc-primary)) 6px,
+    rgba(255, 255, 255, 0.5) 6px,
+    rgba(255, 255, 255, 0.5) 10px
+  );
+}
+
+#mapy-for-chrome-popup .mfc-popup-owner {
+  font-size: 12px;
+  color: var(--mfc-fg-muted);
+  margin-bottom: 10px;
+}
+
+#mapy-for-chrome-popup .mfc-popup-owner strong {
+  color: var(--mfc-fg);
+  font-weight: 600;
+}
+
+/* Like / dislike buttons inside community-route popups */
+#mapy-for-chrome-popup .mfc-popup-votes {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mfc-border);
+}
+
+#mapy-for-chrome-popup .mfc-vote {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--mfc-bg);
+  color: var(--mfc-fg-muted);
+  border: 1px solid var(--mfc-border-strong);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
+}
+
+#mapy-for-chrome-popup .mfc-vote svg {
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-popup .mfc-vote:hover {
+  background: var(--mfc-bg-hover);
+  color: var(--mfc-fg);
+}
+
+#mapy-for-chrome-popup .mfc-vote:active {
+  transform: scale(0.97);
+}
+
+#mapy-for-chrome-popup .mfc-vote-up.mfc-vote-active {
+  background: var(--mfc-primary-soft);
+  border-color: var(--mfc-primary);
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-popup .mfc-vote-down.mfc-vote-active {
+  background: var(--mfc-danger-soft);
+  border-color: var(--mfc-danger);
+  color: var(--mfc-danger);
+}
+
+/* ================ Route list ================ */
+
+#mapy-for-chrome-root .mfc-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: grid;
+  gap: 2px;
+}
+
+#mapy-for-chrome-root .mfc-route-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px 8px 10px 10px;
+  border-radius: 8px;
+  transition: background-color 0.12s ease;
+  align-items: start;
+}
+
+#mapy-for-chrome-root .mfc-route-card:hover {
+  background: var(--mfc-bg-subtle);
+}
+
+#mapy-for-chrome-root .mfc-route-body {
+  min-width: 0;
+  cursor: pointer;
+}
+
+#mapy-for-chrome-root .mfc-route-headrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+#mapy-for-chrome-root .mfc-route-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--mfc-bg), 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+#mapy-for-chrome-root .mfc-route-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--mfc-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+
+#mapy-for-chrome-root .mfc-route-body:hover .mfc-route-name {
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-root .mfc-route-desc {
+  font-size: 12px;
+  color: var(--mfc-fg-muted);
+  margin-top: 3px;
+  margin-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#mapy-for-chrome-root .mfc-route-stats {
+  font-size: 11px;
+  color: var(--mfc-fg-muted);
+  margin-top: 5px;
+  margin-left: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#mapy-for-chrome-root .mfc-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+#mapy-for-chrome-root .mfc-stat svg {
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+#mapy-for-chrome-root .mfc-stat-note {
+  color: var(--mfc-fg-soft);
+  margin-left: 1px;
+  font-weight: 400;
+}
+
+#mapy-for-chrome-root .mfc-route-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+#mapy-for-chrome-root .mfc-route-card:hover .mfc-route-actions,
+#mapy-for-chrome-root .mfc-route-card:focus-within .mfc-route-actions {
+  opacity: 1;
+}
+
+/* ================ Empty state ================ */
+
+#mapy-for-chrome-root .mfc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px 8px;
+  color: var(--mfc-fg-muted);
+}
+
+#mapy-for-chrome-root .mfc-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--mfc-primary-soft);
+  color: var(--mfc-primary);
+  margin-bottom: 12px;
+}
+
+#mapy-for-chrome-root .mfc-empty-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+#mapy-for-chrome-root .mfc-empty-title {
+  color: var(--mfc-fg);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+#mapy-for-chrome-root .mfc-empty-sub {
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 260px;
+}
+
+/* ================ Build / edit forms ================ */
+
+#mapy-for-chrome-root .mfc-build-hint {
+  color: var(--mfc-fg-muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+  padding: 9px 11px;
+  background: var(--mfc-primary-soft);
+  border-radius: 8px;
+  line-height: 1.45;
+}
+
+#mapy-for-chrome-root .mfc-build-points {
+  max-height: 140px;
+  overflow-y: auto;
+  background: var(--mfc-bg-subtle);
+  border: 1px solid var(--mfc-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+#mapy-for-chrome-root .mfc-pointlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px;
+}
+
+#mapy-for-chrome-root .mfc-pointlist li {
+  padding: 2px 0;
+  color: var(--mfc-fg-muted);
+}
+
+#mapy-for-chrome-root .mfc-build-actions {
+  margin-bottom: 10px;
+}
+
+#mapy-for-chrome-root .mfc-build-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+#mapy-for-chrome-root .mfc-build-form label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mfc-fg-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+#mapy-for-chrome-root .mfc-build-form input[type='text'],
+#mapy-for-chrome-root .mfc-build-form select,
+#mapy-for-chrome-root .mfc-build-form textarea {
+  background: var(--mfc-bg);
+  border: 1px solid var(--mfc-border-strong);
+  color: var(--mfc-fg);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+#mapy-for-chrome-root .mfc-build-form textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+#mapy-for-chrome-root .mfc-build-form input[type='text']:focus,
+#mapy-for-chrome-root .mfc-build-form select:focus,
+#mapy-for-chrome-root .mfc-build-form textarea:focus {
+  outline: 0;
+  border-color: var(--mfc-primary);
+  box-shadow: 0 0 0 3px rgba(31, 81, 50, 0.20);
+}
+
+#mapy-for-chrome-root .mfc-build-form .mfc-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+/* Checkbox label inside forms (parking etc.) */
+#mapy-for-chrome-root .mfc-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--mfc-fg);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+#mapy-for-chrome-root .mfc-checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--mfc-primary);
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-root .mfc-build-error {
+  color: var(--mfc-danger);
+  font-size: 11px;
+  min-height: 14px;
+  margin-top: 4px;
+}
+
+/* ================ Difficulty picker ================ */
+
+#mapy-for-chrome-root .mfc-difficulty-picker {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+#mapy-for-chrome-root .mfc-diff-btn {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+
+#mapy-for-chrome-root .mfc-diff-green { background: #1f5132; }
+#mapy-for-chrome-root .mfc-diff-red { background: #e25555; }
+#mapy-for-chrome-root .mfc-diff-black { background: #1a1d21; }
+
+#mapy-for-chrome-root .mfc-diff-btn:hover {
+  transform: scale(1.08);
+}
+
+#mapy-for-chrome-root .mfc-diff-btn.selected {
+  box-shadow:
+    0 0 0 2px var(--mfc-bg),
+    0 0 0 4px var(--mfc-fg);
+}
+
+/* ================ Photo editor ================ */
+
+#mapy-for-chrome-root .mfc-photos-editor {
+  display: grid;
+  gap: 8px;
+}
+
+#mapy-for-chrome-root .mfc-photos-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--mfc-bg);
+  color: var(--mfc-fg);
+  border: 1px dashed var(--mfc-border-strong);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: start;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+#mapy-for-chrome-root .mfc-photos-add:hover {
+  background: var(--mfc-primary-soft);
+  border-color: var(--mfc-primary);
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-root .mfc-photos-add:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#mapy-for-chrome-root .mfc-photos-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#mapy-for-chrome-root .mfc-photo-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--mfc-border);
+}
+
+#mapy-for-chrome-root .mfc-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#mapy-for-chrome-root .mfc-photo-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(15, 20, 30, 0.65);
+  color: white;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+#mapy-for-chrome-root .mfc-photo-remove:hover {
+  background: var(--mfc-danger);
+}
+
+/* ================ SVG overlay (route polylines + markers) ================ */
+
+#mapy-for-chrome-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 500;
+}
+
+/* Cluster bubbles get a subtle scale-up on hover for affordance */
+#mapy-for-chrome-overlay .mfc-cluster {
+  transition: transform 0.12s ease;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+#mapy-for-chrome-overlay .mfc-cluster:hover {
+  transform: scale(1.08);
+}
+
+/* ================ Floating route popup ================ */
+
+#mapy-for-chrome-popup {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  z-index: 100001;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+}
+
+#mapy-for-chrome-popup .mfc-popup-card {
+  position: relative;
+  background: var(--mfc-bg);
+  border: 1px solid var(--mfc-border);
+  border-radius: 14px;
+  box-shadow: var(--mfc-shadow-lg);
+  overflow: hidden;
+}
+
+#mapy-for-chrome-popup .mfc-popup-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--mfc-route-color, var(--mfc-primary));
+}
+
+#mapy-for-chrome-popup .mfc-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px 12px 14px;
+  border-bottom: 1px solid var(--mfc-border);
+  cursor: move;
+  user-select: none;
+}
+
+#mapy-for-chrome-popup .mfc-popup-drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mfc-fg-soft);
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-popup .mfc-popup-title {
+  flex: 1;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--mfc-fg);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#mapy-for-chrome-popup .mfc-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--mfc-fg-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-popup .mfc-iconbtn:hover {
+  background: var(--mfc-bg-hover);
+  color: var(--mfc-fg);
+}
+
+#mapy-for-chrome-popup .mfc-popup-body {
+  padding: 12px 16px 14px;
+  max-height: 50vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mfc-border-strong) transparent;
+}
+
+#mapy-for-chrome-popup .mfc-popup-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+#mapy-for-chrome-popup .mfc-popup-body::-webkit-scrollbar-thumb {
+  background-color: var(--mfc-border-strong);
+  border-radius: 4px;
+}
+
+#mapy-for-chrome-popup .mfc-popup-route {
+  font-size: 12px;
+  color: var(--mfc-fg-muted);
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
+
+#mapy-for-chrome-popup .mfc-arrow {
+  margin: 0 5px;
+  color: var(--mfc-fg-soft);
+}
+
+/* Start / end points block */
+#mapy-for-chrome-popup .mfc-points {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#mapy-for-chrome-popup .mfc-point {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+#mapy-for-chrome-popup .mfc-point-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mfc-bg-subtle);
+  color: var(--mfc-fg-muted);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+#mapy-for-chrome-popup .mfc-point-icon-start {
+  background: var(--mfc-primary-soft);
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-popup .mfc-point-icon-end {
+  background: var(--mfc-danger-soft);
+  color: var(--mfc-danger);
+}
+
+#mapy-for-chrome-popup .mfc-point-icon-loop {
+  background: var(--mfc-primary-soft);
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-popup .mfc-point-text {
+  min-width: 0;
+}
+
+#mapy-for-chrome-popup .mfc-point-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mfc-fg-soft);
+  line-height: 1.2;
+  margin-bottom: 1px;
+}
+
+#mapy-for-chrome-popup .mfc-point-value {
+  font-size: 13px;
+  color: var(--mfc-fg);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Meta row: shape + parking badges side by side */
+#mapy-for-chrome-popup .mfc-popup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+#mapy-for-chrome-popup .mfc-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: var(--mfc-bg-subtle);
+  border: 1px solid var(--mfc-border);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mfc-fg-muted);
+}
+
+#mapy-for-chrome-popup .mfc-meta-badge svg {
+  color: var(--mfc-fg);
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-popup .mfc-meta-parking {
+  background: var(--mfc-primary-soft);
+  border-color: transparent;
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-popup .mfc-meta-parking svg {
+  color: var(--mfc-primary);
+}
+
+#mapy-for-chrome-popup .mfc-popup-desc {
+  font-size: 13px;
+  color: var(--mfc-fg);
+  margin: 8px 0 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+#mapy-for-chrome-popup .mfc-popup-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--mfc-bg-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mfc-fg);
+}
+
+#mapy-for-chrome-popup .mfc-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#mapy-for-chrome-popup .mfc-stat svg {
+  color: var(--mfc-fg-muted);
+  flex-shrink: 0;
+}
+
+#mapy-for-chrome-popup .mfc-stat-note {
+  color: var(--mfc-fg-soft);
+  margin-left: 1px;
+  font-weight: 400;
+}
+
+/* Elevation chart */
+
+#mapy-for-chrome-popup .mfc-popup-chart {
+  margin-top: 14px;
+}
+
+#mapy-for-chrome-popup .mfc-popup-chart-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mfc-fg-muted);
+  margin-bottom: 6px;
+}
+
+#mapy-for-chrome-popup .mfc-elev-chart {
+  width: 100%;
+  height: 96px;
+  display: block;
+  background: var(--mfc-bg-subtle);
+  border-radius: 8px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+/* Photos */
+
+#mapy-for-chrome-popup .mfc-popup-photos {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+#mapy-for-chrome-popup .mfc-popup-photo {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: zoom-in;
+  flex-shrink: 0;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+#mapy-for-chrome-popup .mfc-popup-photo:hover {
+  transform: scale(1.03);
+  box-shadow: var(--mfc-shadow-md);
+}
+
+/* Actions */
+
+#mapy-for-chrome-popup .mfc-popup-actions {
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--mfc-border);
+  background: var(--mfc-bg);
+  display: grid;
+  gap: 8px;
+}
+
+#mapy-for-chrome-popup .mfc-popup-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+#mapy-for-chrome-popup .mfc-primary,
+#mapy-for-chrome-popup .mfc-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+#mapy-for-chrome-popup .mfc-primary {
+  background: var(--mfc-primary);
+  color: #ffffff;
+  border-color: var(--mfc-primary);
+  box-shadow: var(--mfc-shadow-sm);
+}
+
+#mapy-for-chrome-popup .mfc-primary:hover {
+  background: var(--mfc-primary-hover);
+  border-color: var(--mfc-primary-hover);
+}
+
+#mapy-for-chrome-popup .mfc-secondary {
+  background: var(--mfc-bg);
+  color: var(--mfc-fg);
+  border-color: var(--mfc-border-strong);
+}
+
+#mapy-for-chrome-popup .mfc-secondary:hover {
+  background: var(--mfc-bg-hover);
+}
+
+#mapy-for-chrome-popup .mfc-danger {
+  color: var(--mfc-danger);
+}
+
+#mapy-for-chrome-popup .mfc-danger:hover {
+  background: var(--mfc-danger-soft);
+  border-color: var(--mfc-danger);
+  color: var(--mfc-danger-hover);
+}

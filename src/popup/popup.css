@@ -1,0 +1,185 @@
+:root {
+  --bg: #1a1a1a;
+  --bg-elev: #222;
+  --fg: #f0f0f0;
+  --muted: #8a8a8a;
+  --accent: #4a9eff;
+  --danger: #e25555;
+  --border: #2a2a2a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 380px;
+  min-height: 200px;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+h1 {
+  font-size: 14px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.user {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: 8px;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: 0;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+section {
+  padding: 12px 14px;
+}
+
+form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+input[type='text'],
+input[type='url'] {
+  background: #111;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font: inherit;
+  width: 100%;
+}
+
+input[type='color'] {
+  width: 36px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.form-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.form-row input[type='text'] {
+  flex: 1;
+}
+
+.routes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.route {
+  display: grid;
+  grid-template-columns: 4px 1fr auto;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  align-items: center;
+}
+
+.route .swatch {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+}
+
+.route .meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 16px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 0 0 12px 0;
+}
+
+.hint a {
+  color: var(--accent);
+}
+
+.hint strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 11px;
+  min-height: 14px;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.actions button {
+  padding: 4px 8px;
+  font-size: 11px;
+}

@@ -1,0 +1,9 @@
+name = "mapy-for-chrome-backend"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# After running `npm run db:create`, paste the printed database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "mapy-for-chrome-db"
+database_id = "09d0628e-a8f0-4d64-ad1e-5165ffa3e7d2"
