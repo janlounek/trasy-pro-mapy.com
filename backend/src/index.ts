@@ -305,6 +305,10 @@ const MAX_GEOMETRY_LEN = 256 * 1024; // 256 KB (JSON-encoded GeoJSON LineString)
 const MAX_ELEVATION_POINTS = 300;
 const MAX_ID_LEN = 64;
 const MAX_LABEL_LEN = 256;
+// shareUrl is bigger than other labels because mapy.com /fnc/v1/route URLs
+// inline every waypoint (~20 chars each). 8 KB covers routes with hundreds
+// of waypoints while still bounding DoS payloads.
+const MAX_URL_LEN = 8 * 1024;
 const ID_REGEX = /^[A-Za-z0-9_-]{1,64}$/;
 
 function strLen(v: unknown): number {
@@ -338,7 +342,10 @@ function validateUploadPayload(
   ) {
     return { error: 'elevation_profile_too_long', status: 413 };
   }
-  const labelFields = ['shareUrl', 'startLabel', 'endLabel', 'shape', 'difficulty'] as const;
+  if (strLen(body.shareUrl) > MAX_URL_LEN) {
+    return { error: 'shareUrl_too_long', status: 413 };
+  }
+  const labelFields = ['startLabel', 'endLabel', 'shape', 'difficulty'] as const;
   for (const f of labelFields) {
     if (strLen(body[f]) > MAX_LABEL_LEN) {
       return { error: `${f}_too_long`, status: 413 };
