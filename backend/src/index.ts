@@ -110,15 +110,23 @@ async function verifyToken(token: string, env: Env): Promise<VerifiedUser | null
   }
 }
 
+// Only the pinned Chrome Web Store extension is allowed cross-origin. Server-
+// to-server tools (curl, wrangler tail, scripts) don't send Origin and bypass
+// CORS entirely, so health checks and admin queries still work.
+const ALLOWED_EXTENSION_ORIGIN =
+  'chrome-extension://flfeambpmngmpboddgcdigbomliepodm';
+
 function corsHeaders(origin: string | null): Record<string, string> {
-  const allow = origin?.startsWith('chrome-extension://') ? origin : '*';
-  return {
-    'Access-Control-Allow-Origin': allow,
+  const h: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin'
   };
+  if (origin === ALLOWED_EXTENSION_ORIGIN) {
+    h['Access-Control-Allow-Origin'] = origin;
+  }
+  return h;
 }
 
 function json(
@@ -236,14 +244,6 @@ async function castVote(
     .first<{ vote: number }>();
   const priorVote = prior?.vote ?? 0;
 
-  // Compute deltas for the counter columns.
-  let likeDelta = 0;
-  let dislikeDelta = 0;
-  if (priorVote === 1) likeDelta -= 1;
-  if (priorVote === -1) dislikeDelta -= 1;
-  if (vote === 1) likeDelta += 1;
-  if (vote === -1) dislikeDelta += 1;
-
   const now = Math.floor(Date.now() / 1000);
   const statements: D1PreparedStatement[] = [];
 
@@ -267,20 +267,20 @@ async function castVote(
     );
   }
 
-  if (likeDelta !== 0 || dislikeDelta !== 0) {
-    statements.push(
-      env.DB.prepare(
-        `UPDATE shared_routes
-         SET like_count = MAX(0, like_count + ?),
-             dislike_count = MAX(0, dislike_count + ?)
-         WHERE id = ?`
-      ).bind(likeDelta, dislikeDelta, routeId)
-    );
-  }
+  // Always recompute counts from the authoritative `route_votes` table.
+  // Delta-incrementing was racy: two concurrent votes from the same user
+  // would each read priorVote=0 and both increment, drifting the totals.
+  // This recompute also self-heals any historical drift.
+  statements.push(
+    env.DB.prepare(
+      `UPDATE shared_routes
+       SET like_count = (SELECT COUNT(*) FROM route_votes WHERE route_id = ? AND vote = 1),
+           dislike_count = (SELECT COUNT(*) FROM route_votes WHERE route_id = ? AND vote = -1)
+       WHERE id = ?`
+    ).bind(routeId, routeId, routeId)
+  );
 
-  if (statements.length > 0) {
-    await env.DB.batch(statements);
-  }
+  await env.DB.batch(statements);
 
   const updated = await env.DB.prepare(
     'SELECT like_count, dislike_count FROM shared_routes WHERE id = ?'

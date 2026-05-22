@@ -12,10 +12,12 @@ const TAG = '[Trasy mainworld]';
 // Verbose POST logging — off by default to avoid console spam during pans.
 // Enable from DevTools: __mfcDebugAllPosts(true)
 let VERBOSE_POSTS = false;
-(window as unknown as { __mfcDebugAllPosts?: (v: boolean) => void }).__mfcDebugAllPosts = (v: boolean) => {
-  VERBOSE_POSTS = v;
-  console.log(TAG, `verbose POST logging ${v ? 'enabled' : 'disabled'}`);
-};
+if (import.meta.env.DEV) {
+  (window as unknown as { __mfcDebugAllPosts?: (v: boolean) => void }).__mfcDebugAllPosts = (v: boolean) => {
+    VERBOSE_POSTS = v;
+    console.log(TAG, `verbose POST logging ${v ? 'enabled' : 'disabled'}`);
+  };
+}
 
 interface PointPair {
   lon: number;
@@ -286,7 +288,9 @@ function runDiagnostic(): void {
   console.groupEnd();
 }
 
-(window as unknown as { __mfcDiag?: () => void }).__mfcDiag = runDiagnostic;
+if (import.meta.env.DEV) {
+  (window as unknown as { __mfcDiag?: () => void }).__mfcDiag = runDiagnostic;
+}
 
 function runProbe(): void {
   const all = probeForRoutes();
@@ -328,7 +332,9 @@ function runProbe(): void {
 }
 
 // Expose for manual debugging from DevTools: __mfcProbe()
-(window as unknown as { __mfcProbe?: () => void }).__mfcProbe = runProbe;
+if (import.meta.env.DEV) {
+  (window as unknown as { __mfcProbe?: () => void }).__mfcProbe = runProbe;
+}
 
 // ---- fetch hook ----
 const origFetch = window.fetch.bind(window);

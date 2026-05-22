@@ -54,6 +54,51 @@ interface ImportableRoute {
   pageUrl?: string;
 }
 
+/** Strict check that `s` parses as an https://*.mapy.{com,cz}/... URL. */
+function isMapyUrl(s: unknown): s is string {
+  if (typeof s !== 'string') return false;
+  let u: URL;
+  try {
+    u = new URL(s);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== 'https:') return false;
+  return /(^|\.)mapy\.(com|cz)$/.test(u.hostname);
+}
+
+/**
+ * Sanitise an inbound `captured` payload from the main-world script. Any
+ * script on the page could forge such a message — bound the data we'll trust.
+ */
+function validateCapturedPayload(raw: unknown): ImportableRoute | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  if (!Array.isArray(obj.points)) return null;
+  if (obj.points.length < 2 || obj.points.length > 5000) return null;
+
+  const points: LonLat[] = [];
+  for (const p of obj.points) {
+    if (!p || typeof p !== 'object') return null;
+    const lon = Number((p as { lon?: unknown }).lon);
+    const lat = Number((p as { lat?: unknown }).lat);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) return null;
+    points.push({ lon, lat });
+  }
+
+  const pageUrl =
+    typeof obj.pageUrl === 'string' && isMapyUrl(obj.pageUrl)
+      ? obj.pageUrl
+      : undefined;
+  const capturedAt =
+    typeof obj.capturedAt === 'number' && Number.isFinite(obj.capturedAt)
+      ? obj.capturedAt
+      : Date.now();
+
+  return { points, capturedAt, pageUrl };
+}
+
 interface EditState {
   routeId: string;
   name: string;
@@ -453,8 +498,11 @@ function formatElevation(m?: number): string {
   return `${Math.round(m)} m`;
 }
 
+/** Maximum number of photos allowed per route. Keeps per-route storage bounded. */
+const MAX_PHOTOS_PER_ROUTE = 6;
+
 /** Resize an uploaded image to a max dimension and return as JPEG data URL. */
-async function resizeImageFile(file: File, maxDim = 1200, quality = 0.82): Promise<string> {
+async function resizeImageFile(file: File, maxDim = 1000, quality = 0.78): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -542,14 +590,28 @@ function wirePhotoEditor(
   const input = scope.querySelector<HTMLInputElement>('.mfc-photos-input');
   const addBtn = scope.querySelector<HTMLButtonElement>('.mfc-photos-add');
   if (!input || !addBtn) return;
-  addBtn.addEventListener('click', () => input.click());
+  addBtn.addEventListener('click', () => {
+    if (target.photos.length >= MAX_PHOTOS_PER_ROUTE) {
+      alert(`Maximální počet fotek na trasu je ${MAX_PHOTOS_PER_ROUTE}.`);
+      return;
+    }
+    input.click();
+  });
   input.addEventListener('change', async () => {
     const files = Array.from(input.files ?? []);
     if (files.length === 0) return;
+    const remaining = MAX_PHOTOS_PER_ROUTE - target.photos.length;
+    if (remaining <= 0) {
+      input.value = '';
+      alert(`Maximální počet fotek na trasu je ${MAX_PHOTOS_PER_ROUTE}.`);
+      return;
+    }
+    const toLoad = files.slice(0, remaining);
+    const skipped = files.length - toLoad.length;
     addBtn.disabled = true;
     addBtn.textContent = 'Načítám…';
     try {
-      for (const f of files) {
+      for (const f of toLoad) {
         try {
           const dataUrl = await resizeImageFile(f);
           target.photos.push(dataUrl);
@@ -561,6 +623,9 @@ function wirePhotoEditor(
       input.value = '';
       addBtn.disabled = false;
       addBtn.textContent = '+ Přidat fotky';
+      if (skipped > 0) {
+        alert(`Přidáno ${toLoad.length} fotek. ${skipped} fotek bylo přeskočeno (limit ${MAX_PHOTOS_PER_ROUTE} na trasu).`);
+      }
       rerender();
     }
   });
@@ -2640,7 +2705,10 @@ function renderPopup(): void {
     // contain the owner's private `mapy.com/s/<code>` link that fails for
     // anyone else.
     const openUrl = community ? publicMapyUrlForCommunity(community) : finalRoute.shareUrl;
-    if (openUrl) window.location.assign(openUrl);
+    // Defense-in-depth: refuse to navigate to anything that isn't a mapy
+    // URL. Stored shareUrl could in theory be poisoned via a forged
+    // import-captured payload.
+    if (openUrl && isMapyUrl(openUrl)) window.location.assign(openUrl);
   });
   if (!isCommunity) {
     container
@@ -2723,12 +2791,11 @@ function watchMainWorld(): void {
     const d = e.data as { source?: string; type?: string; data?: unknown } | undefined;
     if (!d || d.source !== 'mfc-mainworld') return;
     if (d.type === 'captured') {
-      const captured = d.data as ImportableRoute | null;
-      if (captured && Array.isArray(captured.points) && captured.points.length >= 2) {
-        state.importable = captured;
-      } else {
-        state.importable = null;
-      }
+      // Defense-in-depth: even though the message claims to come from our
+      // main-world helper, any script on the page can post the same shape.
+      // Validate the payload before accepting it.
+      const captured = validateCapturedPayload(d.data);
+      state.importable = captured;
       rerenderPanel();
     }
   });

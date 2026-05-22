@@ -24,6 +24,17 @@ function escape(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]!);
 }
 
+/** Only allow navigating to https mapy.com / mapy.cz URLs. */
+function isSafeMapyUrl(s: string | undefined): s is string {
+  if (typeof s !== 'string') return false;
+  try {
+    const u = new URL(s);
+    return u.protocol === 'https:' && /(^|\.)mapy\.(com|cz)$/.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function formatDistance(m?: number): string {
   if (!m) return '';
   if (m < 1000) return `${m} m`;
@@ -98,7 +109,9 @@ function render(): void {
     document
       .querySelector(`[data-open="${r.id}"]`)
       ?.addEventListener('click', () => {
-        chrome.tabs.create({ url: r.shareUrl });
+        if (isSafeMapyUrl(r.shareUrl)) {
+          chrome.tabs.create({ url: r.shareUrl });
+        }
       });
     document
       .querySelector(`[data-delete="${r.id}"]`)
