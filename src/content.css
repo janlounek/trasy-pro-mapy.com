@@ -439,6 +439,34 @@
   margin-right: 4px;
 }
 
+/* ================ Backup / restore ================ */
+
+#mapy-for-chrome-root .mfc-backup {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mfc-border);
+}
+
+#mapy-for-chrome-root .mfc-backup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+#mapy-for-chrome-root .mfc-backup-btn {
+  margin-top: 0;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+#mapy-for-chrome-root .mfc-backup-hint {
+  font-size: 11px;
+  color: var(--mfc-fg-soft);
+  margin-top: 10px;
+  line-height: 1.45;
+  text-align: center;
+}
+
 /* Slight visual differentiation for popup of someone else's shared route */
 #mapy-for-chrome-popup .mfc-popup-community .mfc-popup-accent {
   background: repeating-linear-gradient(

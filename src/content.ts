@@ -394,6 +394,8 @@ const ICON = {
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
   download:
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>',
+  upload:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>',
   drag:
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="19" r="1.2"/><circle cx="15" cy="5" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="19" r="1.2"/></svg>',
   image:
@@ -1908,6 +1910,7 @@ async function renderPanel(): Promise<void> {
         : renderRouteList()
     }
     ${renderCommunitySection()}
+    ${renderBackupSection()}
   `;
 
   panel.querySelector<HTMLInputElement>('#mfc-show-on-map')!.addEventListener('change', async (ev) => {
@@ -1961,6 +1964,147 @@ async function renderPanel(): Promise<void> {
   panel.querySelector<HTMLButtonElement>('#mfc-refresh-community')?.addEventListener('click', () => {
     void send({ type: 'refreshCommunity' });
   });
+
+  // Backup / restore buttons.
+  panel.querySelector<HTMLButtonElement>('#mfc-export-json')?.addEventListener('click', () => {
+    void exportRoutesToJson();
+  });
+  const fileInput = panel.querySelector<HTMLInputElement>('#mfc-import-input');
+  panel.querySelector<HTMLButtonElement>('#mfc-import-json')?.addEventListener('click', () => {
+    fileInput?.click();
+  });
+  fileInput?.addEventListener('change', async (ev) => {
+    const f = (ev.target as HTMLInputElement).files?.[0];
+    if (f) await importRoutesFromFile(f);
+    // Reset so picking the same file again triggers change.
+    (ev.target as HTMLInputElement).value = '';
+  });
+}
+
+// ---------- Backup / restore (JSON export & import) ----------
+
+const BACKUP_FORMAT_VERSION = 1;
+
+interface BackupFile {
+  version: number;
+  exportedAt: number;
+  user?: string;
+  routes: SavedRoute[];
+  folders: RouteFolder[];
+}
+
+async function exportRoutesToJson(): Promise<void> {
+  if (!state.user) {
+    alert('Před zálohou se prosím přihlas.');
+    return;
+  }
+  const payload: BackupFile = {
+    version: BACKUP_FORMAT_VERSION,
+    exportedAt: Date.now(),
+    user: state.user.oauthUserId,
+    routes: state.routes,
+    folders: state.folders
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.download = `trasy-zaloha-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    a.remove();
+  }, 500);
+}
+
+async function importRoutesFromFile(file: File): Promise<void> {
+  if (!state.user) {
+    alert('Před importem se prosím přihlas.');
+    return;
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    alert('Soubor je příliš velký (limit 50 MB).');
+    return;
+  }
+  let text: string;
+  try {
+    text = await file.text();
+  } catch {
+    alert('Soubor se nepodařilo přečíst.');
+    return;
+  }
+  let data: BackupFile;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    alert('Soubor není platný JSON.');
+    return;
+  }
+  if (!data || typeof data !== 'object') {
+    alert('Soubor nemá platnou strukturu.');
+    return;
+  }
+  if (data.version !== BACKUP_FORMAT_VERSION) {
+    alert(`Neznámá verze zálohy (verze ${data.version}). Aktualizuj rozšíření.`);
+    return;
+  }
+  if (!Array.isArray(data.routes) || !Array.isArray(data.folders)) {
+    alert('Soubor nemá platnou strukturu.');
+    return;
+  }
+  if (data.user && data.user !== state.user.oauthUserId) {
+    const ok = confirm(
+      'Tato záloha byla vytvořena pod jiným účtem. Naimportovat ji pod aktuálním účtem?'
+    );
+    if (!ok) return;
+  }
+
+  const userId = state.user.oauthUserId;
+  const stored = await chrome.storage.local.get(['routes', 'folders']);
+  const routeMap = (stored.routes as Record<string, SavedRoute[]> | undefined) ?? {};
+  const folderMap = (stored.folders as Record<string, RouteFolder[]> | undefined) ?? {};
+  const existingRoutes = routeMap[userId] ?? [];
+  const existingFolders = folderMap[userId] ?? [];
+
+  // Merge by id — skip any IDs already present so re-running is idempotent.
+  const existingRouteIds = new Set(existingRoutes.map((r) => r.id));
+  const existingFolderIds = new Set(existingFolders.map((f) => f.id));
+  const newRoutes = data.routes.filter((r) => r && r.id && !existingRouteIds.has(r.id));
+  const newFolders = data.folders.filter(
+    (f) => f && f.id && !existingFolderIds.has(f.id)
+  );
+
+  routeMap[userId] = [...existingRoutes, ...newRoutes];
+  folderMap[userId] = [...existingFolders, ...newFolders];
+  await chrome.storage.local.set({ routes: routeMap, folders: folderMap });
+
+  const skipped = data.routes.length - newRoutes.length;
+  alert(
+    `Importováno ${newRoutes.length} tras a ${newFolders.length} složek.` +
+      (skipped > 0 ? ` Přeskočeno ${skipped} duplikátů.` : '')
+  );
+
+  await loadFromStorage();
+  rerenderPanel();
+  lastKey = '';
+  renderOverlay();
+}
+
+function renderBackupSection(): string {
+  if (!state.user) return '';
+  return `
+    <section class="mfc-backup">
+      <div class="mfc-backup-row">
+        <button class="mfc-secondary mfc-backup-btn" id="mfc-export-json" title="Stáhnout všechny trasy a složky jako JSON">${ICON.download}<span>Stáhnout zálohu</span></button>
+        <button class="mfc-secondary mfc-backup-btn" id="mfc-import-json" title="Načíst trasy a složky ze zálohy">${ICON.upload}<span>Načíst zálohu</span></button>
+        <input type="file" id="mfc-import-input" accept="application/json,.json" hidden>
+      </div>
+      <div class="mfc-backup-hint">Doporučujeme stáhnout zálohu před odinstalací nebo přechodem na jiný počítač.</div>
+    </section>
+  `;
 }
 
 function renderCommunitySection(): string {

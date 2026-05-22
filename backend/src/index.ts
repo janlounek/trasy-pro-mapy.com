@@ -56,6 +56,11 @@ async function sha256Hex(s: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Short TTL so that a token revoked by Seznam stops being honored within at
+// most ~1 minute. The cache exists only to absorb bursty traffic; making it
+// longer would leak the revocation window.
+const TOKEN_CACHE_TTL_SECONDS = 60;
+
 async function verifyToken(token: string, env: Env): Promise<VerifiedUser | null> {
   const hash = await sha256Hex(token);
   const now = Math.floor(Date.now() / 1000);
@@ -73,15 +78,23 @@ async function verifyToken(token: string, env: Env): Promise<VerifiedUser | null
     const res = await fetch('https://login.szn.cz/api/v1/user', {
       headers: { Authorization: `Bearer ${token}` }
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Seznam rejected the token. Drop any cache row for it so we don't
+      // continue honoring it even briefly. Without this an attacker with a
+      // recently-revoked token could still hit our backend for up to the
+      // remainder of the previous cache window.
+      await env.DB.prepare('DELETE FROM token_cache WHERE token_hash = ?')
+        .bind(hash)
+        .run();
+      return null;
+    }
     // Privacy: only consume `oauth_user_id` from the userinfo response. The
     // identity scope returns email + firstname + lastname automatically, but
     // we deliberately discard them — we never want to persist or share PII.
     const u = (await res.json()) as { oauth_user_id?: string };
     if (!u.oauth_user_id) return null;
 
-    // Cache for 15 minutes (well within Seznam's usual 1h access-token lifetime).
-    const expires = now + 15 * 60;
+    const expires = now + TOKEN_CACHE_TTL_SECONDS;
     await env.DB.prepare(
       'INSERT OR REPLACE INTO token_cache (token_hash, oauth_user_id, user_name, expires_at) VALUES (?, ?, NULL, ?)'
     )

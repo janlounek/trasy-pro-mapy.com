@@ -115,16 +115,34 @@ export async function deleteFolder(oauthUserId: string, folderId: string): Promi
 }
 
 // ----- OAuth token storage -----
+//
+// Tokens live in chrome.storage.session (in-memory, cleared on browser close).
+// Persisting the refresh token to disk would let any process running as the
+// user read it from Chrome's profile and impersonate the user indefinitely.
+// The trade-off: the user has to re-authenticate via Seznam after a browser
+// restart, which is one click.
 
 export async function getAuth(): Promise<AuthTokens | null> {
-  const o = await chrome.storage.local.get(AUTH_KEY);
+  const o = await chrome.storage.session.get(AUTH_KEY);
   return (o[AUTH_KEY] as AuthTokens | undefined) ?? null;
 }
 
 export async function setAuth(auth: AuthTokens | null): Promise<void> {
   if (auth) {
-    await chrome.storage.local.set({ [AUTH_KEY]: auth });
+    await chrome.storage.session.set({ [AUTH_KEY]: auth });
   } else {
+    await chrome.storage.session.remove(AUTH_KEY);
+  }
+}
+
+/**
+ * One-time cleanup of refresh tokens that older builds wrote to
+ * chrome.storage.local. Called on every service worker startup — idempotent.
+ */
+export async function clearLegacyLocalAuth(): Promise<void> {
+  try {
     await chrome.storage.local.remove(AUTH_KEY);
+  } catch {
+    /* ignore */
   }
 }

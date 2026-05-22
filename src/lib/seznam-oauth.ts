@@ -3,6 +3,7 @@ import type { AuthTokens, User } from './types';
 const AUTH_URL = 'https://login.szn.cz/api/v1/oauth/auth';
 const TOKEN_URL = 'https://login.szn.cz/api/v1/oauth/token';
 const USERINFO_URL = 'https://login.szn.cz/api/v1/user';
+const REVOKE_URL = 'https://login.szn.cz/api/v1/oauth/revoke';
 
 function base64url(bytes: Uint8Array): string {
   let s = '';
@@ -101,6 +102,33 @@ export async function login(): Promise<LoginResult> {
       expiresAt: Math.floor(Date.now() / 1000) + (tokenJson.expires_in ?? 3600)
     }
   };
+}
+
+/**
+ * Tell Seznam to invalidate a token. Best-effort — failures are silently
+ * swallowed because we still want to clear local state even if the network
+ * call fails.
+ */
+export async function revokeToken(
+  token: string,
+  kind: 'access_token' | 'refresh_token'
+): Promise<void> {
+  const clientId = import.meta.env.VITE_SEZNAM_CLIENT_ID;
+  if (!clientId || !token) return;
+  try {
+    const body = new URLSearchParams({
+      token,
+      client_id: clientId,
+      token_type_hint: kind
+    });
+    await fetch(REVOKE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    });
+  } catch {
+    /* network error — local state will still be cleared by the caller */
+  }
 }
 
 /**

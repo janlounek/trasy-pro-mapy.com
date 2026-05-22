@@ -1,4 +1,4 @@
-import { login, refreshAccessToken } from './lib/seznam-oauth';
+import { login, refreshAccessToken, revokeToken } from './lib/seznam-oauth';
 import {
   uploadSharedRoute,
   deleteSharedRoute,
@@ -32,7 +32,8 @@ import {
   updateFolder,
   deleteFolder,
   getAuth,
-  setAuth
+  setAuth,
+  clearLegacyLocalAuth
 } from './lib/storage';
 import type {
   Difficulty,
@@ -375,8 +376,19 @@ async function handle(msg: Msg): Promise<unknown> {
       return { ok: true, user: result.user };
     }
     case 'logout': {
+      const auth = await getAuth();
+      // Best-effort: tell Seznam to revoke both tokens. We deliberately don't
+      // await — they're side-effects only, and we always want to clear local
+      // state even if the network is unreachable.
+      if (auth) {
+        if (auth.refreshToken) void revokeToken(auth.refreshToken, 'refresh_token');
+        if (auth.accessToken) void revokeToken(auth.accessToken, 'access_token');
+      }
       await setUser(null);
       await setAuth(null);
+      // Drop the community-routes cache so post-logout the side panel doesn't
+      // continue showing data fetched while we were authenticated.
+      await chrome.storage.local.remove('communityRoutes');
       return { ok: true };
     }
     case 'getUser': {
@@ -716,6 +728,11 @@ async function handle(msg: Msg): Promise<unknown> {
     }
   }
 }
+
+// One-time cleanup: older builds wrote auth tokens to chrome.storage.local
+// (persistent disk). Refresh tokens there are a security liability — move to
+// session storage. This runs on every service-worker boot; idempotent.
+void clearLegacyLocalAuth();
 
 chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
   handle(msg)
