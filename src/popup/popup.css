@@ -35,6 +35,17 @@ header {
   gap: 8px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-icon {
+  border-radius: 6px;
+  display: block;
+}
+
 h1 {
   font-size: 14px;
   margin: 0;

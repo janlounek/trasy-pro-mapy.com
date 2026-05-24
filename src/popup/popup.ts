@@ -68,7 +68,12 @@ async function refresh(): Promise<void> {
 function render(): void {
   if (!state.user) {
     app.innerHTML = `
-      <header><h1>Trasy pro mapy.com</h1></header>
+      <header>
+        <div class="brand">
+          <img class="brand-icon" src="../../icons/icon-48.png" width="28" height="28" alt="">
+          <h1>Trasy pro mapy.com</h1>
+        </div>
+      </header>
       <section>
         <p class="empty">Přihlas se přes Seznam pro ukládání tras.</p>
         <button id="login">Přihlásit přes Seznam</button>
@@ -83,7 +88,10 @@ function render(): void {
   // know they're authenticated, not who they are by name.
   app.innerHTML = `
     <header>
-      <h1>Trasy pro mapy.com</h1>
+      <div class="brand">
+        <img class="brand-icon" src="../../icons/icon-48.png" width="28" height="28" alt="">
+        <h1>Trasy pro mapy.com</h1>
+      </div>
       <div>
         <span class="user">Přihlášen</span>
         <button id="logout" class="secondary">Odhlásit</button>

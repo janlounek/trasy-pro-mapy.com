@@ -109,8 +109,9 @@ code {
 }
 
 .brand-icon {
-  color: var(--primary);
   flex-shrink: 0;
+  border-radius: 6px;
+  display: block;
 }
 
 .nav-links {

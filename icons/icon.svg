@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Trasy pro mapy.com — master logo.
+       Concept: a winding hiking trail across a deep-forest backdrop.
+       Start = circle (origin). End = triangular peak (summit / destination).
+       Forest-green palette intentionally distinct from Seznam green. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2d6a4f"/>
+      <stop offset="1" stop-color="#1f5132"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded-square background (Chrome icon convention). -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bg)"/>
+
+  <!-- Mountain silhouette: hidden at 16 px (becomes a single dark band), visible at 48+ -->
+  <path d="M 0 442 L 88 348 L 158 402 L 240 322 L 320 386 L 410 312 L 512 360 L 512 512 L 0 512 Z"
+        fill="#163d23" opacity="0.55"/>
+
+  <!-- Trail. White stroke with rounded caps; an S-curve from bottom-left to top-right.
+       Stroke width tuned so the path stays visible at 16 px without dominating. -->
+  <path d="M 116 408 C 116 318 230 308 244 248 C 258 188 362 178 396 110"
+        fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Start marker: solid white disc with a green pupil. -->
+  <circle cx="116" cy="408" r="38" fill="#ffffff"/>
+  <circle cx="116" cy="408" r="16" fill="#1f5132"/>
+
+  <!-- End marker: white disc with a triangular peak inside (summit symbol). -->
+  <circle cx="396" cy="110" r="38" fill="#ffffff"/>
+  <polygon points="380,128 396,90 412,128" fill="#1f5132"/>
+</svg>
