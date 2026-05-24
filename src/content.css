@@ -86,6 +86,15 @@
   flex-shrink: 0;
 }
 
+#mapy-for-chrome-root .mfc-toolbar-row {
+  display: inline-flex;
+  gap: 8px;
+}
+
+#mapy-for-chrome-root .mfc-toggle-filter-active {
+  border-color: var(--mfc-primary);
+}
+
 /* ================ Side panel ================ */
 
 #mapy-for-chrome-root .mfc-panel {
@@ -114,6 +123,35 @@
 }
 
 #mapy-for-chrome-root.mfc-collapsed .mfc-panel {
+  display: none;
+}
+
+#mapy-for-chrome-root .mfc-filter-panel {
+  position: absolute;
+  top: 52px;
+  left: 0;
+  width: 340px;
+  max-height: 78vh;
+  overflow-y: auto;
+  background: var(--mfc-bg);
+  border: 1px solid var(--mfc-border);
+  border-radius: 12px;
+  box-shadow: var(--mfc-shadow-lg);
+  padding: 14px 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mfc-border-strong) transparent;
+}
+
+#mapy-for-chrome-root .mfc-filter-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+#mapy-for-chrome-root .mfc-filter-panel::-webkit-scrollbar-thumb {
+  background-color: var(--mfc-border-strong);
+  border-radius: 4px;
+}
+
+#mapy-for-chrome-root.mfc-filter-collapsed .mfc-filter-panel {
   display: none;
 }
 
@@ -446,54 +484,7 @@
   transform: rotate(90deg);
 }
 
-/* ================ Filter bar ================ */
-
-#mapy-for-chrome-root .mfc-filter {
-  margin: 10px 0 8px;
-  border: 1px solid var(--mfc-border);
-  border-radius: 8px;
-  background: var(--mfc-bg);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-}
-
-#mapy-for-chrome-root .mfc-filter.mfc-filter-open {
-  display: block;
-  padding: 6px 10px 10px;
-}
-
-#mapy-for-chrome-root .mfc-filter-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--mfc-border);
-  margin-bottom: 8px;
-}
-
-#mapy-for-chrome-root .mfc-filter-toggle {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mfc-fg);
-  cursor: pointer;
-  padding: 4px 2px;
-}
-
-#mapy-for-chrome-root .mfc-filter-toggle:hover {
-  color: var(--mfc-primary);
-}
-
-#mapy-for-chrome-root .mfc-filter-has-active .mfc-filter-toggle {
-  color: var(--mfc-primary);
-}
+/* ================ Filter panel ================ */
 
 #mapy-for-chrome-root .mfc-count-active {
   background: var(--mfc-primary);

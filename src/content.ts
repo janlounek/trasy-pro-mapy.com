@@ -148,7 +148,6 @@ interface State {
   editing: EditState | null;
   popup: PopupState | null;
   filters: RouteFilters;
-  filterBarOpen: boolean;
   communityCollapsed: boolean;
 }
 
@@ -163,7 +162,6 @@ const state: State = {
   editing: null,
   popup: null,
   filters: { ...EMPTY_FILTERS },
-  filterBarOpen: false,
   communityCollapsed: true
 };
 
@@ -1949,21 +1947,41 @@ function initSidePanel(): void {
 
   const root = document.createElement('div');
   root.id = ROOT_ID;
+  // Both panels are hidden by default — user opens one at a time.
   root.classList.add('mfc-collapsed');
+  root.classList.add('mfc-filter-collapsed');
   document.documentElement.appendChild(root);
 
-  const toggle = document.createElement('button');
-  toggle.className = 'mfc-toggle';
-  toggle.title = 'Moje trasy';
-  toggle.innerHTML = `${ICON.compass}<span>Trasy</span>`;
-  root.appendChild(toggle);
+  // Toolbar row holds two launcher buttons (Trasy + Filtr) side by side.
+  const toolbar = document.createElement('div');
+  toolbar.className = 'mfc-toolbar-row';
+  root.appendChild(toolbar);
+
+  const toggleTrasy = document.createElement('button');
+  toggleTrasy.className = 'mfc-toggle mfc-toggle-trasy';
+  toggleTrasy.title = 'Moje trasy';
+  toggleTrasy.innerHTML = `${ICON.compass}<span>Trasy</span>`;
+  toolbar.appendChild(toggleTrasy);
+
+  const toggleFilter = document.createElement('button');
+  toggleFilter.className = 'mfc-toggle mfc-toggle-filter';
+  toggleFilter.title = 'Filtr tras';
+  // innerHTML is refreshed by updateFilterButtonBadge so the count chip stays in sync.
+  toggleFilter.innerHTML = `${ICON.filter}<span>Filtr</span>`;
+  toolbar.appendChild(toggleFilter);
 
   const panel = document.createElement('div');
   panel.className = 'mfc-panel';
   root.appendChild(panel);
 
-  toggle.addEventListener('click', () => {
+  const filterPanel = document.createElement('div');
+  filterPanel.className = 'mfc-filter-panel';
+  root.appendChild(filterPanel);
+
+  toggleTrasy.addEventListener('click', () => {
     const wasCollapsed = root.classList.contains('mfc-collapsed');
+    // Only one panel visible at a time — close the other.
+    root.classList.add('mfc-filter-collapsed');
     root.classList.toggle('mfc-collapsed');
     if (wasCollapsed) {
       // Trigger a fresh probe before showing the panel — by now mapy.com has
@@ -1978,7 +1996,29 @@ function initSidePanel(): void {
     }
   });
 
+  toggleFilter.addEventListener('click', () => {
+    const wasCollapsed = root.classList.contains('mfc-filter-collapsed');
+    root.classList.add('mfc-collapsed');
+    root.classList.toggle('mfc-filter-collapsed');
+    if (wasCollapsed) renderFilterPanel();
+  });
+
+  updateFilterButtonBadge();
   startTrasyButtonPositioning(root);
+}
+
+/** Refresh the count badge on the Filtr toolbar button. */
+function updateFilterButtonBadge(): void {
+  const btn = document.querySelector<HTMLButtonElement>(
+    `#${ROOT_ID} .mfc-toggle-filter`
+  );
+  if (!btn) return;
+  const count = activeFilterCount(state.filters);
+  const badge = count > 0
+    ? `<span class="mfc-count mfc-count-active">${count}</span>`
+    : '';
+  btn.innerHTML = `${ICON.filter}<span>Filtr</span>${badge}`;
+  btn.classList.toggle('mfc-toggle-filter-active', count > 0);
 }
 
 /**
@@ -2073,7 +2113,6 @@ async function renderPanel(): Promise<void> {
       <button class="mfc-secondary" id="mfc-new-route">${ICON.plus}<span>Nová trasa</span></button>
       <button class="mfc-secondary" id="mfc-new-folder" title="Vytvořit novou složku">${ICON.folderPlus}<span>Nová složka</span></button>
     </div>
-    ${renderFilterBar()}
     ${
       state.routes.length === 0 && state.folders.length === 0
         ? `<div class="mfc-empty">
@@ -2142,73 +2181,6 @@ async function renderPanel(): Promise<void> {
     state.communityCollapsed = !state.communityCollapsed;
     void saveCommunityCollapsed();
     rerenderPanel();
-  });
-
-  // Filter bar: toggle, clear, and per-field handlers.
-  panel.querySelector<HTMLButtonElement>('#mfc-filter-toggle')?.addEventListener('click', () => {
-    state.filterBarOpen = !state.filterBarOpen;
-    rerenderPanel();
-  });
-  panel.querySelector<HTMLButtonElement>('#mfc-filter-clear')?.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    state.filters = { ...EMPTY_FILTERS };
-    void saveFilters();
-    lastKey = '';
-    rerenderPanel();
-    renderOverlay();
-  });
-  panel.querySelectorAll<HTMLButtonElement>('[data-filter-diff]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const d = btn.dataset.filterDiff as Difficulty | undefined;
-      if (!d) return;
-      const list = state.filters.difficulties;
-      const idx = list.indexOf(d);
-      if (idx >= 0) list.splice(idx, 1);
-      else list.push(d);
-      void saveFilters();
-      lastKey = '';
-      rerenderPanel();
-      renderOverlay();
-    });
-  });
-  panel.querySelectorAll<HTMLButtonElement>('[data-filter-shape]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const s = btn.dataset.filterShape as RouteShape | undefined;
-      if (!s) return;
-      const list = state.filters.shapes;
-      const idx = list.indexOf(s);
-      if (idx >= 0) list.splice(idx, 1);
-      else list.push(s);
-      void saveFilters();
-      lastKey = '';
-      rerenderPanel();
-      renderOverlay();
-    });
-  });
-  panel.querySelector<HTMLInputElement>('#mfc-filter-duration')?.addEventListener('change', (ev) => {
-    const v = (ev.target as HTMLInputElement).value.trim();
-    const n = v === '' ? NaN : Number(v);
-    state.filters.maxDurationMin = Number.isFinite(n) && n > 0 ? Math.round(n * 60) : undefined;
-    void saveFilters();
-    lastKey = '';
-    rerenderPanel();
-    renderOverlay();
-  });
-  panel.querySelector<HTMLInputElement>('#mfc-filter-elev')?.addEventListener('change', (ev) => {
-    const v = (ev.target as HTMLInputElement).value.trim();
-    const n = v === '' ? NaN : Number(v);
-    state.filters.maxElevationGainM = Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
-    void saveFilters();
-    lastKey = '';
-    rerenderPanel();
-    renderOverlay();
-  });
-  panel.querySelector<HTMLInputElement>('#mfc-filter-parking')?.addEventListener('change', (ev) => {
-    state.filters.parkingOnly = (ev.target as HTMLInputElement).checked;
-    void saveFilters();
-    lastKey = '';
-    rerenderPanel();
-    renderOverlay();
   });
 
   // Backup / restore buttons.
@@ -2353,26 +2325,13 @@ function renderBackupSection(): string {
   `;
 }
 
-function renderFilterBar(): string {
+/** Build the HTML for the standalone Filtr panel (no toggle, the button is the toggle). */
+function filterPanelHtml(): string {
   const f = state.filters;
   const count = activeFilterCount(f);
-  const open = state.filterBarOpen;
-  const headerBadge = count > 0
-    ? `<span class="mfc-count mfc-count-active">${count}</span>`
-    : '';
   const clearBtn = count > 0
     ? `<button class="mfc-secondary mfc-filter-clear" id="mfc-filter-clear" title="Vyčistit filtry">Vyčistit</button>`
     : '';
-  if (!open) {
-    return `
-      <section class="mfc-filter${count > 0 ? ' mfc-filter-has-active' : ''}">
-        <button class="mfc-filter-toggle" id="mfc-filter-toggle" type="button">
-          ${ICON.filter}<span>Filtr</span>${headerBadge}
-        </button>
-        ${clearBtn}
-      </section>
-    `;
-  }
 
   const diffBtns = (['green', 'red', 'black'] as const)
     .map((d) => {
@@ -2396,39 +2355,114 @@ function renderFilterBar(): string {
     f.maxElevationGainM !== undefined ? f.maxElevationGainM.toString() : '';
 
   return `
-    <section class="mfc-filter mfc-filter-open${count > 0 ? ' mfc-filter-has-active' : ''}">
-      <div class="mfc-filter-header">
-        <button class="mfc-filter-toggle" id="mfc-filter-toggle" type="button">
-          ${ICON.filter}<span>Filtr</span>${headerBadge}
-        </button>
-        ${clearBtn}
+    <div class="mfc-header">
+      <div class="mfc-header-title">
+        <span>Filtr tras</span>
+        ${count > 0 ? `<span class="mfc-count mfc-count-active">${count}</span>` : ''}
       </div>
-      <div class="mfc-filter-body">
-        <div class="mfc-filter-row">
-          <label class="mfc-filter-label">Obtížnost</label>
-          <div class="mfc-difficulty-picker">${diffBtns}</div>
-        </div>
-        <div class="mfc-filter-row">
-          <label class="mfc-filter-label">Tvar trasy</label>
-          <div class="mfc-filter-shapes">${shapeBtns}</div>
-        </div>
-        <div class="mfc-filter-row mfc-filter-row-inline">
-          <label class="mfc-filter-label">Max. doba (h)</label>
-          <input type="number" class="mfc-filter-input" id="mfc-filter-duration" min="0" step="0.5" placeholder="∞" value="${escape(durationVal)}">
-        </div>
-        <div class="mfc-filter-row mfc-filter-row-inline">
-          <label class="mfc-filter-label">Max. převýšení (m)</label>
-          <input type="number" class="mfc-filter-input" id="mfc-filter-elev" min="0" step="50" placeholder="∞" value="${escape(elevVal)}">
-        </div>
-        <div class="mfc-filter-row">
-          <label class="mfc-checkbox">
-            <input type="checkbox" id="mfc-filter-parking" ${f.parkingOnly ? 'checked' : ''}>
-            <span>Pouze s parkováním u startu</span>
-          </label>
-        </div>
+      ${clearBtn}
+    </div>
+    <div class="mfc-filter-body">
+      <div class="mfc-filter-row">
+        <label class="mfc-filter-label">Obtížnost</label>
+        <div class="mfc-difficulty-picker">${diffBtns}</div>
       </div>
-    </section>
+      <div class="mfc-filter-row">
+        <label class="mfc-filter-label">Tvar trasy</label>
+        <div class="mfc-filter-shapes">${shapeBtns}</div>
+      </div>
+      <div class="mfc-filter-row mfc-filter-row-inline">
+        <label class="mfc-filter-label">Max. doba (h)</label>
+        <input type="number" class="mfc-filter-input" id="mfc-filter-duration" min="0" step="0.5" placeholder="∞" value="${escape(durationVal)}">
+      </div>
+      <div class="mfc-filter-row mfc-filter-row-inline">
+        <label class="mfc-filter-label">Max. převýšení (m)</label>
+        <input type="number" class="mfc-filter-input" id="mfc-filter-elev" min="0" step="50" placeholder="∞" value="${escape(elevVal)}">
+      </div>
+      <div class="mfc-filter-row">
+        <label class="mfc-checkbox">
+          <input type="checkbox" id="mfc-filter-parking" ${f.parkingOnly ? 'checked' : ''}>
+          <span>Pouze s parkováním u startu</span>
+        </label>
+      </div>
+    </div>
   `;
+}
+
+function getFilterPanelEl(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(`#${ROOT_ID} .mfc-filter-panel`);
+}
+
+/** Re-render the Filtr panel and refresh the button badge. */
+function renderFilterPanel(): void {
+  const panel = getFilterPanelEl();
+  if (panel) panel.innerHTML = filterPanelHtml();
+  updateFilterButtonBadge();
+  wireFilterPanelHandlers();
+}
+
+function wireFilterPanelHandlers(): void {
+  const panel = getFilterPanelEl();
+  if (!panel) return;
+  panel.querySelector<HTMLButtonElement>('#mfc-filter-clear')?.addEventListener('click', () => {
+    state.filters = { ...EMPTY_FILTERS };
+    void saveFilters();
+    onFiltersChanged();
+  });
+  panel.querySelectorAll<HTMLButtonElement>('[data-filter-diff]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const d = btn.dataset.filterDiff as Difficulty | undefined;
+      if (!d) return;
+      const list = state.filters.difficulties;
+      const idx = list.indexOf(d);
+      if (idx >= 0) list.splice(idx, 1);
+      else list.push(d);
+      void saveFilters();
+      onFiltersChanged();
+    });
+  });
+  panel.querySelectorAll<HTMLButtonElement>('[data-filter-shape]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const s = btn.dataset.filterShape as RouteShape | undefined;
+      if (!s) return;
+      const list = state.filters.shapes;
+      const idx = list.indexOf(s);
+      if (idx >= 0) list.splice(idx, 1);
+      else list.push(s);
+      void saveFilters();
+      onFiltersChanged();
+    });
+  });
+  panel.querySelector<HTMLInputElement>('#mfc-filter-duration')?.addEventListener('change', (ev) => {
+    const v = (ev.target as HTMLInputElement).value.trim();
+    const n = v === '' ? NaN : Number(v);
+    state.filters.maxDurationMin = Number.isFinite(n) && n > 0 ? Math.round(n * 60) : undefined;
+    void saveFilters();
+    onFiltersChanged();
+  });
+  panel.querySelector<HTMLInputElement>('#mfc-filter-elev')?.addEventListener('change', (ev) => {
+    const v = (ev.target as HTMLInputElement).value.trim();
+    const n = v === '' ? NaN : Number(v);
+    state.filters.maxElevationGainM = Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+    void saveFilters();
+    onFiltersChanged();
+  });
+  panel.querySelector<HTMLInputElement>('#mfc-filter-parking')?.addEventListener('change', (ev) => {
+    state.filters.parkingOnly = (ev.target as HTMLInputElement).checked;
+    void saveFilters();
+    onFiltersChanged();
+  });
+}
+
+/** A filter dimension changed — refresh every UI surface that reflects them. */
+function onFiltersChanged(): void {
+  lastKey = '';
+  const panel = getFilterPanelEl();
+  if (panel) panel.innerHTML = filterPanelHtml();
+  wireFilterPanelHandlers();
+  updateFilterButtonBadge();
+  rerenderPanel();
+  renderOverlay();
 }
 
 function renderCommunitySection(): string {
