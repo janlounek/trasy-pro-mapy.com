@@ -115,6 +115,28 @@ interface PopupState {
   routeId: string;
 }
 
+/**
+ * User-configurable filters that narrow which routes appear in the side panel
+ * AND on the map (applies to both personal + community routes). Empty arrays /
+ * undefined fields mean "no constraint on this dimension".
+ */
+interface RouteFilters {
+  difficulties: Difficulty[];
+  shapes: RouteShape[];
+  /** Hide routes whose duration exceeds this many minutes. */
+  maxDurationMin?: number;
+  /** Only routes with parking marked at the start. */
+  parkingOnly: boolean;
+  /** Hide routes whose elevation gain exceeds this many meters. */
+  maxElevationGainM?: number;
+}
+
+const EMPTY_FILTERS: RouteFilters = {
+  difficulties: [],
+  shapes: [],
+  parkingOnly: false
+};
+
 interface State {
   user: User | null;
   routes: SavedRoute[];
@@ -125,6 +147,9 @@ interface State {
   importable: ImportableRoute | null;
   editing: EditState | null;
   popup: PopupState | null;
+  filters: RouteFilters;
+  filterBarOpen: boolean;
+  communityCollapsed: boolean;
 }
 
 const state: State = {
@@ -136,7 +161,10 @@ const state: State = {
   building: null,
   importable: null,
   editing: null,
-  popup: null
+  popup: null,
+  filters: { ...EMPTY_FILTERS },
+  filterBarOpen: false,
+  communityCollapsed: true
 };
 
 // In-memory UI state for which folders are currently collapsed in the side
@@ -250,13 +278,89 @@ function sharedToRouteView(s: SharedRoute): SavedRoute {
 }
 
 /**
- * Return all routes that should be rendered on the map (own + community).
- * Cached per render to avoid converting SharedRoutes repeatedly.
+ * Return all routes that should be rendered on the map (own + community),
+ * after the active filters are applied. Cached per render to avoid converting
+ * SharedRoutes repeatedly.
  */
 function allMapRoutes(): SavedRoute[] {
-  const arr: SavedRoute[] = [...state.routes];
-  for (const c of state.communityRoutes) arr.push(sharedToRouteView(c));
+  const arr: SavedRoute[] = [];
+  for (const r of state.routes) {
+    if (passesFilter(r, state.filters)) arr.push(r);
+  }
+  for (const c of state.communityRoutes) {
+    const view = sharedToRouteView(c);
+    if (passesFilter(view, state.filters)) arr.push(view);
+  }
   return arr;
+}
+
+/** Check whether the given route satisfies every active filter constraint. */
+function passesFilter(r: SavedRoute, f: RouteFilters): boolean {
+  if (f.difficulties.length > 0) {
+    if (!r.difficulty || !f.difficulties.includes(r.difficulty)) return false;
+  }
+  if (f.shapes.length > 0) {
+    if (!r.shape || !f.shapes.includes(r.shape)) return false;
+  }
+  if (f.maxDurationMin !== undefined) {
+    if (r.durationS !== undefined && r.durationS > f.maxDurationMin * 60) return false;
+  }
+  if (f.parkingOnly && !r.hasParkingAtStart) return false;
+  if (f.maxElevationGainM !== undefined) {
+    if (r.elevationGainM !== undefined && r.elevationGainM > f.maxElevationGainM) return false;
+  }
+  return true;
+}
+
+/** How many filter dimensions are currently active. Used for the badge count. */
+function activeFilterCount(f: RouteFilters): number {
+  let n = 0;
+  if (f.difficulties.length > 0) n++;
+  if (f.shapes.length > 0) n++;
+  if (f.maxDurationMin !== undefined) n++;
+  if (f.parkingOnly) n++;
+  if (f.maxElevationGainM !== undefined) n++;
+  return n;
+}
+
+const FILTERS_STORAGE_KEY = 'uiFilters';
+const COMMUNITY_COLLAPSED_KEY = 'uiCommunityCollapsed';
+
+async function loadUiPrefs(): Promise<void> {
+  try {
+    const o = await chrome.storage.local.get([FILTERS_STORAGE_KEY, COMMUNITY_COLLAPSED_KEY]);
+    const f = o[FILTERS_STORAGE_KEY] as Partial<RouteFilters> | undefined;
+    if (f && typeof f === 'object') {
+      state.filters = {
+        difficulties: Array.isArray(f.difficulties) ? f.difficulties.filter((d): d is Difficulty => d === 'green' || d === 'red' || d === 'black') : [],
+        shapes: Array.isArray(f.shapes) ? f.shapes.filter((s): s is RouteShape => s === 'loop' || s === 'out-and-back' || s === 'one-way') : [],
+        maxDurationMin: typeof f.maxDurationMin === 'number' && f.maxDurationMin > 0 ? f.maxDurationMin : undefined,
+        parkingOnly: Boolean(f.parkingOnly),
+        maxElevationGainM: typeof f.maxElevationGainM === 'number' && f.maxElevationGainM > 0 ? f.maxElevationGainM : undefined
+      };
+    }
+    if (typeof o[COMMUNITY_COLLAPSED_KEY] === 'boolean') {
+      state.communityCollapsed = o[COMMUNITY_COLLAPSED_KEY] as boolean;
+    }
+  } catch {
+    /* defaults */
+  }
+}
+
+async function saveFilters(): Promise<void> {
+  try {
+    await chrome.storage.local.set({ [FILTERS_STORAGE_KEY]: state.filters });
+  } catch {
+    /* best-effort */
+  }
+}
+
+async function saveCommunityCollapsed(): Promise<void> {
+  try {
+    await chrome.storage.local.set({ [COMMUNITY_COLLAPSED_KEY]: state.communityCollapsed });
+  } catch {
+    /* best-effort */
+  }
 }
 
 /**
@@ -470,7 +574,11 @@ const ICON = {
   thumbsUp:
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>',
   thumbsDown:
-    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>'
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>',
+  share:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+  filter:
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>'
 };
 
 function shapeIcon(shape: RouteShape): string {
@@ -1965,6 +2073,7 @@ async function renderPanel(): Promise<void> {
       <button class="mfc-secondary" id="mfc-new-route">${ICON.plus}<span>Nová trasa</span></button>
       <button class="mfc-secondary" id="mfc-new-folder" title="Vytvořit novou složku">${ICON.folderPlus}<span>Nová složka</span></button>
     </div>
+    ${renderFilterBar()}
     ${
       state.routes.length === 0 && state.folders.length === 0
         ? `<div class="mfc-empty">
@@ -2028,6 +2137,78 @@ async function renderPanel(): Promise<void> {
   }
   panel.querySelector<HTMLButtonElement>('#mfc-refresh-community')?.addEventListener('click', () => {
     void send({ type: 'refreshCommunity' });
+  });
+  panel.querySelector<HTMLButtonElement>('#mfc-community-toggle')?.addEventListener('click', () => {
+    state.communityCollapsed = !state.communityCollapsed;
+    void saveCommunityCollapsed();
+    rerenderPanel();
+  });
+
+  // Filter bar: toggle, clear, and per-field handlers.
+  panel.querySelector<HTMLButtonElement>('#mfc-filter-toggle')?.addEventListener('click', () => {
+    state.filterBarOpen = !state.filterBarOpen;
+    rerenderPanel();
+  });
+  panel.querySelector<HTMLButtonElement>('#mfc-filter-clear')?.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    state.filters = { ...EMPTY_FILTERS };
+    void saveFilters();
+    lastKey = '';
+    rerenderPanel();
+    renderOverlay();
+  });
+  panel.querySelectorAll<HTMLButtonElement>('[data-filter-diff]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const d = btn.dataset.filterDiff as Difficulty | undefined;
+      if (!d) return;
+      const list = state.filters.difficulties;
+      const idx = list.indexOf(d);
+      if (idx >= 0) list.splice(idx, 1);
+      else list.push(d);
+      void saveFilters();
+      lastKey = '';
+      rerenderPanel();
+      renderOverlay();
+    });
+  });
+  panel.querySelectorAll<HTMLButtonElement>('[data-filter-shape]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const s = btn.dataset.filterShape as RouteShape | undefined;
+      if (!s) return;
+      const list = state.filters.shapes;
+      const idx = list.indexOf(s);
+      if (idx >= 0) list.splice(idx, 1);
+      else list.push(s);
+      void saveFilters();
+      lastKey = '';
+      rerenderPanel();
+      renderOverlay();
+    });
+  });
+  panel.querySelector<HTMLInputElement>('#mfc-filter-duration')?.addEventListener('change', (ev) => {
+    const v = (ev.target as HTMLInputElement).value.trim();
+    const n = v === '' ? NaN : Number(v);
+    state.filters.maxDurationMin = Number.isFinite(n) && n > 0 ? Math.round(n * 60) : undefined;
+    void saveFilters();
+    lastKey = '';
+    rerenderPanel();
+    renderOverlay();
+  });
+  panel.querySelector<HTMLInputElement>('#mfc-filter-elev')?.addEventListener('change', (ev) => {
+    const v = (ev.target as HTMLInputElement).value.trim();
+    const n = v === '' ? NaN : Number(v);
+    state.filters.maxElevationGainM = Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+    void saveFilters();
+    lastKey = '';
+    rerenderPanel();
+    renderOverlay();
+  });
+  panel.querySelector<HTMLInputElement>('#mfc-filter-parking')?.addEventListener('change', (ev) => {
+    state.filters.parkingOnly = (ev.target as HTMLInputElement).checked;
+    void saveFilters();
+    lastKey = '';
+    rerenderPanel();
+    renderOverlay();
   });
 
   // Backup / restore buttons.
@@ -2172,29 +2353,128 @@ function renderBackupSection(): string {
   `;
 }
 
-function renderCommunitySection(): string {
-  const routes = state.communityRoutes;
-  if (routes.length === 0) {
+function renderFilterBar(): string {
+  const f = state.filters;
+  const count = activeFilterCount(f);
+  const open = state.filterBarOpen;
+  const headerBadge = count > 0
+    ? `<span class="mfc-count mfc-count-active">${count}</span>`
+    : '';
+  const clearBtn = count > 0
+    ? `<button class="mfc-secondary mfc-filter-clear" id="mfc-filter-clear" title="Vyčistit filtry">Vyčistit</button>`
+    : '';
+  if (!open) {
     return `
-      <section class="mfc-community">
-        <div class="mfc-community-header">
-          <span class="mfc-community-title">Komunitní trasy</span>
-          <button class="mfc-iconbtn" id="mfc-refresh-community" title="Aktualizovat">${ICON.download}</button>
-        </div>
-        <div class="mfc-community-empty">Zatím nikdo nesdílí žádnou trasu.</div>
+      <section class="mfc-filter${count > 0 ? ' mfc-filter-has-active' : ''}">
+        <button class="mfc-filter-toggle" id="mfc-filter-toggle" type="button">
+          ${ICON.filter}<span>Filtr</span>${headerBadge}
+        </button>
+        ${clearBtn}
       </section>
     `;
   }
+
+  const diffBtns = (['green', 'red', 'black'] as const)
+    .map((d) => {
+      const selected = f.difficulties.includes(d);
+      return `<button type="button" class="mfc-diff-btn mfc-diff-${d}${selected ? ' selected' : ''}" data-filter-diff="${d}" title="${DIFFICULTY_LABELS[d]}" aria-label="${DIFFICULTY_LABELS[d]}"></button>`;
+    })
+    .join('');
+
+  const shapeBtns = (['loop', 'out-and-back', 'one-way'] as const)
+    .map((s) => {
+      const selected = f.shapes.includes(s);
+      return `<button type="button" class="mfc-filter-shape${selected ? ' mfc-filter-shape-selected' : ''}" data-filter-shape="${s}" title="${ROUTE_SHAPE_LABELS[s]}">${shapeIcon(s)}<span>${ROUTE_SHAPE_LABELS[s]}</span></button>`;
+    })
+    .join('');
+
+  const durationVal =
+    f.maxDurationMin !== undefined
+      ? (f.maxDurationMin / 60).toString()
+      : '';
+  const elevVal =
+    f.maxElevationGainM !== undefined ? f.maxElevationGainM.toString() : '';
+
   return `
-    <section class="mfc-community">
+    <section class="mfc-filter mfc-filter-open${count > 0 ? ' mfc-filter-has-active' : ''}">
+      <div class="mfc-filter-header">
+        <button class="mfc-filter-toggle" id="mfc-filter-toggle" type="button">
+          ${ICON.filter}<span>Filtr</span>${headerBadge}
+        </button>
+        ${clearBtn}
+      </div>
+      <div class="mfc-filter-body">
+        <div class="mfc-filter-row">
+          <label class="mfc-filter-label">Obtížnost</label>
+          <div class="mfc-difficulty-picker">${diffBtns}</div>
+        </div>
+        <div class="mfc-filter-row">
+          <label class="mfc-filter-label">Tvar trasy</label>
+          <div class="mfc-filter-shapes">${shapeBtns}</div>
+        </div>
+        <div class="mfc-filter-row mfc-filter-row-inline">
+          <label class="mfc-filter-label">Max. doba (h)</label>
+          <input type="number" class="mfc-filter-input" id="mfc-filter-duration" min="0" step="0.5" placeholder="∞" value="${escape(durationVal)}">
+        </div>
+        <div class="mfc-filter-row mfc-filter-row-inline">
+          <label class="mfc-filter-label">Max. převýšení (m)</label>
+          <input type="number" class="mfc-filter-input" id="mfc-filter-elev" min="0" step="50" placeholder="∞" value="${escape(elevVal)}">
+        </div>
+        <div class="mfc-filter-row">
+          <label class="mfc-checkbox">
+            <input type="checkbox" id="mfc-filter-parking" ${f.parkingOnly ? 'checked' : ''}>
+            <span>Pouze s parkováním u startu</span>
+          </label>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderCommunitySection(): string {
+  const allRoutes = state.communityRoutes;
+  // Filter the community list with the same rules used for the map overlay.
+  const visible = allRoutes.filter((c) =>
+    passesFilter(sharedToRouteView(c), state.filters)
+  );
+  const collapsed = state.communityCollapsed;
+  const collapsedClass = collapsed ? ' mfc-community-collapsed' : '';
+  const chevronTitle = collapsed ? 'Rozbalit' : 'Sbalit';
+
+  if (allRoutes.length === 0) {
+    return `
+      <section class="mfc-community${collapsedClass}">
+        <div class="mfc-community-header">
+          <button class="mfc-folder-chevron" id="mfc-community-toggle" title="${chevronTitle}">${ICON.chevronRight}</button>
+          <span class="mfc-community-title">Komunitní trasy</span>
+          <button class="mfc-iconbtn" id="mfc-refresh-community" title="Aktualizovat">${ICON.download}</button>
+        </div>
+        ${collapsed ? '' : `<div class="mfc-community-empty">Zatím nikdo nesdílí žádnou trasu.</div>`}
+      </section>
+    `;
+  }
+
+  const filtersActive = activeFilterCount(state.filters) > 0;
+  const filteredHint =
+    filtersActive && visible.length !== allRoutes.length
+      ? `<span class="mfc-count mfc-count-soft" title="Zobrazeno z celkem ${allRoutes.length} po aplikaci filtrů">${visible.length}/${allRoutes.length}</span>`
+      : `<span class="mfc-count">${allRoutes.length}</span>`;
+
+  const body = collapsed
+    ? ''
+    : visible.length === 0
+      ? `<div class="mfc-community-empty">Žádná komunitní trasa neodpovídá filtrům.</div>`
+      : `<ul class="mfc-list">${visible.map(renderCommunityListItem).join('')}</ul>`;
+
+  return `
+    <section class="mfc-community${collapsedClass}">
       <div class="mfc-community-header">
+        <button class="mfc-folder-chevron" id="mfc-community-toggle" title="${chevronTitle}">${ICON.chevronRight}</button>
         <span class="mfc-community-title">Komunitní trasy</span>
-        <span class="mfc-count">${routes.length}</span>
+        ${filteredHint}
         <button class="mfc-iconbtn" id="mfc-refresh-community" title="Aktualizovat">${ICON.download}</button>
       </div>
-      <ul class="mfc-list">
-        ${routes.map(renderCommunityListItem).join('')}
-      </ul>
+      ${body}
     </section>
   `;
 }
@@ -2219,17 +2499,25 @@ function renderCommunityListItem(c: SharedRoute): string {
 }
 
 function renderRouteList(): string {
+  const visible = state.routes.filter((r) => passesFilter(r, state.filters));
+  const filtersActive = activeFilterCount(state.filters) > 0;
+
   if (state.folders.length === 0) {
     // No folders: render routes as a single flat list (original behaviour).
-    if (state.routes.length === 0) return '';
-    return `<ul class="mfc-list">${state.routes.map(renderRouteListItem).join('')}</ul>`;
+    if (visible.length === 0) {
+      if (filtersActive && state.routes.length > 0) {
+        return `<div class="mfc-empty mfc-empty-soft">Žádná trasa neodpovídá filtrům.</div>`;
+      }
+      return '';
+    }
+    return `<ul class="mfc-list">${visible.map(renderRouteListItem).join('')}</ul>`;
   }
 
   // Partition routes by folder
   const byFolder = new Map<string, SavedRoute[]>();
   const unfiled: SavedRoute[] = [];
   const folderIds = new Set(state.folders.map((f) => f.id));
-  for (const r of state.routes) {
+  for (const r of visible) {
     if (r.folderId && folderIds.has(r.folderId)) {
       const arr = byFolder.get(r.folderId) ?? [];
       arr.push(r);
@@ -2255,7 +2543,12 @@ function renderRouteList(): string {
          </section>`
       : '';
 
-  return folderSections + unfiledSection;
+  const emptyHint =
+    filtersActive && visible.length === 0
+      ? `<div class="mfc-empty mfc-empty-soft">Žádná trasa neodpovídá filtrům.</div>`
+      : '';
+
+  return folderSections + unfiledSection + emptyHint;
 }
 
 function renderFolderSection(folder: RouteFolder, routes: SavedRoute[]): string {
@@ -2288,12 +2581,16 @@ function renderRouteListItem(r: SavedRoute): string {
   const descShort = r.description
     ? `<div class="mfc-route-desc">${escape(r.description)}</div>`
     : '';
+  const sharedBadge = r.shared
+    ? `<span class="mfc-shared-badge" title="Tato trasa je sdílená s komunitou">${ICON.share}</span>`
+    : '';
   return `
     <li class="mfc-route-card">
       <div class="mfc-route-body" data-show="${r.id}" title="Zobrazit trasu na mapě">
         <div class="mfc-route-headrow">
           <span class="mfc-route-dot" style="background:${escape(routeDisplayColor(r))}"></span>
           <div class="mfc-route-name">${escape(r.name)}</div>
+          ${sharedBadge}
         </div>
         ${descShort}
         ${stats ? `<div class="mfc-route-stats">${stats}</div>` : ''}
@@ -2833,6 +3130,7 @@ async function boot(): Promise<void> {
   initSidePanel();
   watchStorage();
   watchMainWorld();
+  await loadUiPrefs();
   await loadFromStorage();
   requestAnimationFrame(watcherLoop);
 }
