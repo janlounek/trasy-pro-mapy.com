@@ -147,10 +147,18 @@ async function getUserFromAuth(req: Request, env: Env): Promise<VerifiedUser | n
   return verifyToken(token, env);
 }
 
-function rowToRoute(row: SharedRouteRow): unknown {
+function rowToRoute(row: SharedRouteRow, viewerId: string | null): unknown {
   return {
     id: row.id,
-    ownerId: row.owner_id,
+    // Privacy: we never expose the raw oauth_user_id of the owner. A stable
+    // per-uploader identifier would let viewers correlate "these routes are by
+    // the same person." Instead, we return a per-route boolean that's true
+    // only when the requester *is* the owner — enough for the client to
+    // de-duplicate its own routes in the community list, without leaking any
+    // cross-route identity. Field kept null for back-compat with older clients
+    // that read it.
+    ownerId: null,
+    isMine: viewerId !== null && row.owner_id === viewerId,
     // Privacy: owner_name is no longer surfaced. Field kept for back-compat
     // with older client builds that read it; always null.
     ownerName: null,
@@ -196,6 +204,8 @@ async function listRoutes(
   since: number,
   voterId: string | null
 ): Promise<unknown[]> {
+  // The voter is also the viewer — they're the same authenticated user.
+  // viewerId is what rowToRoute uses to set `isMine` per route.
   if (voterId) {
     const res = await env.DB.prepare(
       `SELECT sr.*, rv.vote AS my_vote
@@ -208,14 +218,14 @@ async function listRoutes(
     )
       .bind(voterId, since)
       .all<SharedRouteRow>();
-    return (res.results ?? []).map(rowToRoute);
+    return (res.results ?? []).map((r) => rowToRoute(r, voterId));
   }
   const res = await env.DB.prepare(
     'SELECT * FROM shared_routes WHERE updated_at >= ? ORDER BY updated_at DESC LIMIT 500'
   )
     .bind(since)
     .all<SharedRouteRow>();
-  return (res.results ?? []).map(rowToRoute);
+  return (res.results ?? []).map((r) => rowToRoute(r, null));
 }
 
 /**

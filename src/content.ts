@@ -1930,9 +1930,15 @@ async function loadFromStorage(): Promise<void> {
       state.folders = [];
     }
     // Community routes are global, filter out our own so we don't double-list.
+    // Prefer the server-set `isMine` flag (new backend); fall back to the
+    // legacy ownerId comparison so routes cached from an older backend before
+    // the field switched still get filtered correctly.
     const community = (o.communityRoutes as SharedRoute[] | undefined) ?? [];
     state.communityRoutes = state.user
-      ? community.filter((r) => r.ownerId !== state.user!.oauthUserId)
+      ? community.filter((r) => {
+          if (typeof r.isMine === 'boolean') return !r.isMine;
+          return r.ownerId !== state.user!.oauthUserId;
+        })
       : community;
     pruneRouteCache();
   } catch {

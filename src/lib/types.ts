@@ -99,7 +99,18 @@ export type RouteVote = 'like' | 'dislike' | null;
 /** Read-only route from the community backend (someone else's shared route). */
 export interface SharedRoute {
   id: string;
-  ownerId: string;
+  /**
+   * Always null on responses from the current backend — kept for back-compat
+   * with older bundles that may have cached community routes from when the
+   * field carried the raw oauth_user_id.
+   */
+  ownerId: string | null;
+  /**
+   * Server-set: true only when the authenticated requester is this route's
+   * owner. Lets the client de-duplicate its own routes from the community
+   * view without the server having to leak a stable per-uploader identifier.
+   */
+  isMine?: boolean;
   ownerName: string | null;
   name: string;
   description: string | null;
