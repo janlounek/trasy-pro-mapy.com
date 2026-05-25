@@ -91,6 +91,21 @@ async function tryCapture(source: 'fetch' | 'xhr', url: string, body: unknown): 
     const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
     const points = extractCoords(text);
     if (points.length >= 2) {
+      // Same viewport-distance sanity check as runProbe: a captured polyline
+      // whose centroid sits hundreds of km from the user's current map view
+      // is almost certainly leftover data from a different route — drop it.
+      const vp = urlViewport();
+      if (vp) {
+        const c = centroidOf(points);
+        const d = distanceKm(vp, c);
+        if (d > MAX_DISTANCE_FROM_VIEWPORT_KM) {
+          console.log(
+            TAG,
+            `dropping ${source} capture: centroid ${d.toFixed(0)} km from viewport (${points.length} pts)`
+          );
+          return;
+        }
+      }
       lastCaptured = {
         points,
         rawBodyLength: bytes.length,
@@ -193,6 +208,71 @@ function isPlausiblePolyline(coords: PointPair2[]): boolean {
   // 1° ≈ 111 km. Any consecutive jump bigger than this isn't a route.
   return maxGapDeg < 1.0;
 }
+
+/**
+ * Pull the user's current map viewport from the URL. mapy.com encodes the
+ * map centre as `?x=<lon>&y=<lat>&z=<zoom>` in every URL. When the user
+ * navigates between saved routes, the URL is rewritten to centre on the new
+ * route — so the URL viewport is the most reliable signal for "what route
+ * is the user actually looking at right now."
+ *
+ * Returns null when the URL doesn't carry a viewport, in which case we fall
+ * back to accepting any plausible polyline.
+ */
+function urlViewport(): { lon: number; lat: number; z: number } | null {
+  try {
+    const p = new URLSearchParams(location.search);
+    const lon = Number(p.get('x'));
+    const lat = Number(p.get('y'));
+    const z = Number(p.get('z'));
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) return null;
+    return { lon, lat, z: Number.isFinite(z) ? z : 12 };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Return the centroid of a polyline (rough arithmetic mean of lon/lat).
+ * Good enough for distance comparisons at hiking-route scale.
+ */
+function centroidOf(coords: PointPair2[]): { lon: number; lat: number } {
+  let lon = 0;
+  let lat = 0;
+  for (const c of coords) {
+    lon += c.lon;
+    lat += c.lat;
+  }
+  return { lon: lon / coords.length, lat: lat / coords.length };
+}
+
+/**
+ * Cheap great-circle-ish distance in km between two lon/lat points using the
+ * equirectangular approximation. Plenty accurate for the "is this route
+ * within sight of the user's current map view" check.
+ */
+function distanceKm(
+  a: { lon: number; lat: number },
+  b: { lon: number; lat: number }
+): number {
+  const R = 6371;
+  const dLon = ((b.lon - a.lon) * Math.PI) / 180;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const meanLat = (((a.lat + b.lat) / 2) * Math.PI) / 180;
+  const x = dLon * Math.cos(meanLat);
+  return Math.hypot(x, dLat) * R;
+}
+
+/**
+ * Anything farther than this from the URL viewport is treated as a leftover
+ * from a previously-viewed route still cached in mapy.com's JS memory and
+ * gets rejected. 200 km is loose enough to allow zoomed-out browsing of a
+ * regional polyline whose centroid sits outside the current viewport, but
+ * tight enough to reject "the user is in Czechia, this polyline is in Italy"
+ * — the actual bug we're fighting.
+ */
+const MAX_DISTANCE_FROM_VIEWPORT_KM = 200;
 
 function probeForRoutes(maxDepth = 9, maxNodes = 20000): ProbeHit[] {
   const results: ProbeHit[] = [];
@@ -306,10 +386,38 @@ if (import.meta.env.DEV) {
  */
 function runProbe(force = false): void {
   const all = probeForRoutes();
-  const plausible = all.filter((r) => isPlausiblePolyline(r.coords));
+  let plausible = all.filter((r) => isPlausiblePolyline(r.coords));
+
+  // Viewport filter: mapy.com keeps multiple routes in JS memory after SPA
+  // navigation (the just-viewed one, the one before that, search results,
+  // etc.). probeForRoutes finds them all and "longest wins" picks the wrong
+  // one when the user-facing route happens to be shorter than a stale one.
+  // The URL viewport is the authoritative signal for "what the user is
+  // looking at right now" — drop any candidate that's clearly somewhere
+  // else on the planet.
+  const vp = urlViewport();
+  if (vp) {
+    const before = plausible.length;
+    plausible = plausible.filter((r) => {
+      const c = centroidOf(r.coords);
+      const d = distanceKm(vp, c);
+      if (d > MAX_DISTANCE_FROM_VIEWPORT_KM) {
+        console.log(
+          TAG,
+          `dropping ${r.path}: centroid ${d.toFixed(0)} km from viewport (${r.coords.length} pts)`
+        );
+        return false;
+      }
+      return true;
+    });
+    if (before !== plausible.length) {
+      console.log(TAG, `viewport filter kept ${plausible.length}/${before}`);
+    }
+  }
+
   console.log(
     TAG,
-    `probe (force=${force}): ${all.length} candidate(s), ${plausible.length} plausible`
+    `probe (force=${force}): ${all.length} candidate(s), ${plausible.length} plausible after filter`
   );
   plausible.slice(0, 6).forEach((r, i) => {
     const first = r.coords[0];
