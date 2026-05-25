@@ -292,12 +292,24 @@ if (import.meta.env.DEV) {
   (window as unknown as { __mfcDiag?: () => void }).__mfcDiag = runDiagnostic;
 }
 
-function runProbe(): void {
+/**
+ * Walk window.Mapy / SMap for the best route polyline in JS memory.
+ *
+ * When `force` is true, any plausible candidate overwrites the existing
+ * capture — used when the content script is about to import and wants a
+ * fresh snapshot regardless of what's buffered. When `force` is false (the
+ * default), a longer existing capture is preserved so the multi-stage load
+ * — "waypoint summary first, full polyline later" — stabilises on the
+ * longer one. We deliberately do NOT keep "longest wins" forever: the
+ * onNavigation handler nulls `lastCaptured` whenever the URL changes, so
+ * SPA navigation between saved routes starts from a clean slate.
+ */
+function runProbe(force = false): void {
   const all = probeForRoutes();
   const plausible = all.filter((r) => isPlausiblePolyline(r.coords));
   console.log(
     TAG,
-    `probe: ${all.length} candidate(s), ${plausible.length} pass plausibility check`
+    `probe (force=${force}): ${all.length} candidate(s), ${plausible.length} plausible`
   );
   plausible.slice(0, 6).forEach((r, i) => {
     const first = r.coords[0];
@@ -307,13 +319,13 @@ function runProbe(): void {
       `  ${i + 1}. ${r.path} — ${r.coords.length} pts (${first.lon.toFixed(3)},${first.lat.toFixed(3)} → ${last.lon.toFixed(3)},${last.lat.toFixed(3)})`
     );
   });
-  if (plausible.length === 0) return;
-  const best = plausible[0]; // longest-first (probeForRoutes sorts by length desc)
+  if (plausible.length === 0) {
+    if (force) postToContent('probeDone', { ok: false, reason: 'no_plausible' });
+    return;
+  }
+  const best = plausible[0]; // longest-first
 
-  // Lifetime "longest wins": never downgrade a capture. The full polyline often
-  // lands in JS memory later than the waypoint summary, and we don't want to
-  // overwrite a 500-pt polyline with a 12-pt waypoint list.
-  if (lastCaptured && lastCaptured.points.length >= best.coords.length) {
+  if (!force && lastCaptured && lastCaptured.points.length >= best.coords.length) {
     console.log(
       TAG,
       `keeping existing capture (${lastCaptured.points.length} pts ≥ candidate ${best.coords.length})`
@@ -329,6 +341,7 @@ function runProbe(): void {
   };
   console.log(TAG, `using ${best.path} (${best.coords.length} pts) as captured route`);
   postToContent('captured', lastCaptured);
+  if (force) postToContent('probeDone', { ok: true, points: best.coords.length });
 }
 
 // Expose for manual debugging from DevTools: __mfcProbe()
@@ -453,7 +466,13 @@ window.addEventListener('message', (e: MessageEvent) => {
     postToContent('captured', lastCaptured);
   }
   if (d.type === 'runProbe') {
-    runProbe();
+    runProbe(false);
+  }
+  if (d.type === 'forceProbe') {
+    // Reset the buffered capture so the "longest wins" guard inside runProbe
+    // doesn't keep a stale polyline from before the user navigated.
+    lastCaptured = null;
+    runProbe(true);
   }
   if (d.type === 'probeDebug') {
     const w = window as unknown as Record<string, unknown>;

@@ -1604,6 +1604,77 @@ function importCurrentRoute(): void {
   renderOverlay();
 }
 
+/**
+ * Ask main-world to drop its buffered capture and re-walk window.Mapy *right
+ * now*, then import using the fresh result. This handles the SPA-navigation
+ * case where mapy.com keeps the previously-viewed route in JS memory and our
+ * passive probes either find the stale one or correctly find the new one but
+ * lose to the "longest wins" guard. The forced probe bypasses that guard.
+ */
+async function importCurrentRouteFresh(): Promise<void> {
+  const btn = document.getElementById('mfc-import-route') as HTMLButtonElement | null;
+  const origHtml = btn?.innerHTML ?? '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `${ICON.download}<span>Načítám aktuální trasu…</span>`;
+  }
+  try {
+    const fresh = await requestFreshCapture(2500);
+    if (fresh && fresh.points.length >= 2) {
+      // requestFreshCapture also writes to state.importable via the existing
+      // 'captured' message path, so importCurrentRoute reads the fresh value.
+      importCurrentRoute();
+      return;
+    }
+    // Fallback: if the force-probe didn't find anything (e.g. mapy.com hasn't
+    // populated window.Mapy yet), use whatever was already buffered.
+    if (state.importable && state.importable.points.length >= 2) {
+      importCurrentRoute();
+      return;
+    }
+    alert('Trasa se nepodařilo načíst. Zkus stránku obnovit (Ctrl+R) a importovat znovu.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+}
+
+/**
+ * Send `forceProbe` to main-world and resolve with the next captured payload
+ * (or null on timeout). main-world also emits a `probeDone` confirmation that
+ * lets us short-circuit when there's nothing to capture.
+ */
+function requestFreshCapture(timeoutMs: number): Promise<ImportableRoute | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (v: ImportableRoute | null): void => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('message', onMsg);
+      window.clearTimeout(timer);
+      resolve(v);
+    };
+    const onMsg = (e: MessageEvent): void => {
+      if (e.source !== window) return;
+      const d = e.data as { source?: string; type?: string; data?: unknown } | undefined;
+      if (!d || d.source !== 'mfc-mainworld') return;
+      if (d.type === 'captured') {
+        // The watchMainWorld listener has already validated + stored this; we
+        // just need to know the fresh result is in state.importable now.
+        finish(validateCapturedPayload(d.data));
+      } else if (d.type === 'probeDone') {
+        const r = d.data as { ok?: boolean } | undefined;
+        if (r && r.ok === false) finish(null);
+      }
+    };
+    window.addEventListener('message', onMsg);
+    const timer = window.setTimeout(() => finish(null), timeoutMs);
+    window.postMessage({ source: 'mfc-isolated', type: 'forceProbe' }, '*');
+  });
+}
+
 function startEdit(route: SavedRoute): void {
   state.editing = {
     routeId: route.id,
@@ -1990,11 +2061,13 @@ function initSidePanel(): void {
     root.classList.add('mfc-filter-collapsed');
     root.classList.toggle('mfc-collapsed');
     if (wasCollapsed) {
-      // Trigger a fresh probe before showing the panel — by now mapy.com has
+      // Trigger a *force* probe before showing the panel — by now mapy.com has
       // usually finished decoding the full polyline into JS state, even if the
-      // earlier auto-probes ran too soon.
+      // earlier auto-probes ran too soon. forceProbe also clears any stale
+      // buffered capture from the previously-viewed route, so the import
+      // button reflects what's actually on screen right now.
       try {
-        window.postMessage({ source: 'mfc-isolated', type: 'runProbe' }, '*');
+        window.postMessage({ source: 'mfc-isolated', type: 'forceProbe' }, '*');
       } catch {
         // ignore
       }
@@ -2145,7 +2218,7 @@ async function renderPanel(): Promise<void> {
     void createFolderUi();
   });
   panel.querySelector<HTMLButtonElement>('#mfc-import-route')?.addEventListener('click', () => {
-    importCurrentRoute();
+    void importCurrentRouteFresh();
   });
 
   // Wire per-route action buttons.
