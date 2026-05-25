@@ -3,6 +3,27 @@
    Clean, minimalistic, matches the extension's design language.
    ============================================================= */
 
+/* ---- Language switching ----
+   Every translatable element carries lang="cs" or lang="en". The page-root
+   <html lang="..."> attribute (set by an inline script before paint and
+   toggled by the lang-switch button) controls which copy is visible. */
+
+html[lang='cs'] [lang='en'] {
+  display: none !important;
+}
+html[lang='en'] [lang='cs'] {
+  display: none !important;
+}
+
+/* The switch-button labels use classes (not lang attrs) so they need their
+   own rules — the label shown is the language we'd switch TO. */
+html[lang='cs'] .lang-switch-en {
+  display: none;
+}
+html[lang='en'] .lang-switch-cs {
+  display: none;
+}
+
 :root {
   --bg: #ffffff;
   --bg-subtle: #fafafa;
@@ -147,6 +168,29 @@ code {
   text-decoration: none;
 }
 
+.lang-switch {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.lang-switch:hover {
+  background: var(--bg-soft);
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
 /* ---- Hero ---- */
 
 .hero {
@@ -241,88 +285,37 @@ code {
   text-decoration: none;
 }
 
-/* ---- Hero art (subtle decorative map graphic) ---- */
+/* ---- Hero art (extension screenshot) ---- */
 
 .hero-art {
   display: flex;
   justify-content: center;
 }
 
-.map-frame {
-  position: relative;
+.screenshot-frame {
+  margin: 0;
   width: 100%;
-  max-width: 480px;
-  aspect-ratio: 4 / 3;
-  background: linear-gradient(135deg, #eef2eb 0%, #f0f5ed 100%);
-  border-radius: var(--radius-lg);
+  max-width: 540px;
+  background: var(--bg);
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 
-.map-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(31, 81, 50, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 81, 50, 0.08) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-.map-route {
-  position: absolute;
-  inset: 0;
+.screenshot-frame img {
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  background: var(--bg-soft);
 }
 
-.map-marker {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--primary);
-  border: 3px solid #fff;
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.18),
-    0 0 0 1px rgba(0, 0, 0, 0.06);
-}
-
-.map-marker-1 {
-  bottom: 18%;
-  left: 13%;
-  background: #1f5132;
-}
-
-.map-marker-2 {
-  top: 38%;
-  left: 42%;
-  background: #e25555;
-}
-
-.map-marker-3 {
-  top: 18%;
-  right: 14%;
-  background: #1a1d21;
-}
-
-.map-cluster {
-  position: absolute;
-  top: 60%;
-  right: 32%;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  border: 3px solid #fff;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.18),
-    0 0 0 1px rgba(0, 0, 0, 0.06);
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 14px;
+.screenshot-frame figcaption {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--fg-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
 }
 
 /* ---- Sections ---- */
@@ -529,6 +522,14 @@ code {
   margin-bottom: 48px;
   padding-bottom: 32px;
   border-bottom: 1px solid var(--border);
+}
+
+.doc-updated {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-soft);
+  letter-spacing: 0.02em;
 }
 
 .doc-header h1 {

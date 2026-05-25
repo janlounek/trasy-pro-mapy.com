@@ -3,281 +3,699 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zásady ochrany soukromí — Trasy pro mapy.com</title>
-    <meta
-      name="description"
-      content="Co rozšíření Trasy pro mapy.com shromažďuje, kam to posílá a jak to smazat."
-    />
+    <title lang="cs">Zásady ochrany soukromí — Trasy pro mapy.com</title>
+    <title lang="en">Privacy policy — Trasy pro mapy.com</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="style.css" />
+    <script>
+      (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('mfc-lang'); } catch (e) {}
+        var lang =
+          saved ||
+          (navigator.language &&
+          navigator.language.toLowerCase().indexOf('en') === 0
+            ? 'en'
+            : 'cs');
+        document.documentElement.lang = lang;
+      })();
+    </script>
   </head>
   <body>
     <header class="nav">
       <a class="brand" href="./">
-        <svg
-          class="brand-icon"
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="10"></circle>
-          <polygon
-            points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"
-          ></polygon>
-        </svg>
+        <img class="brand-icon" src="favicon.svg" width="28" height="28" alt="" />
         <span>Trasy pro mapy.com</span>
       </a>
       <nav class="nav-links">
-        <a href="index.html#features">Funkce</a>
-        <a href="index.html#how">Jak používat</a>
-        <a href="privacy.html" class="active">Soukromí</a>
+        <a href="index.html#features" lang="cs">Funkce</a>
+        <a href="index.html#features" lang="en">Features</a>
+        <a href="index.html#how" lang="cs">Jak používat</a>
+        <a href="index.html#how" lang="en">How to use</a>
+        <a href="privacy.html" class="active" lang="cs">Soukromí</a>
+        <a href="privacy.html" class="active" lang="en">Privacy</a>
+        <a href="terms.html" lang="cs">Podmínky</a>
+        <a href="terms.html" lang="en">Terms</a>
+        <button class="lang-switch" type="button" id="lang-switch">
+          <span class="lang-switch-cs">EN</span>
+          <span class="lang-switch-en">CS</span>
+        </button>
       </nav>
     </header>
 
     <main class="doc">
       <article>
         <header class="doc-header">
-          <span class="eyebrow">Naposledy aktualizováno: 22. 5. 2026</span>
-          <h1>Zásady ochrany soukromí</h1>
-          <p class="lead">
-            Stručně: shromažďujeme co nejméně. Tvoje jméno ani e-mail nikam
-            neposíláme. Tvoje trasy jsou tvoje a sdílí se jen explicitně.
-          </p>
+          <p class="doc-updated" lang="cs">Naposledy aktualizováno: 25. května 2026</p>
+          <p class="doc-updated" lang="en">Last updated: 25 May 2026</p>
+          <h1 lang="cs">Zásady ochrany soukromí</h1>
+          <h1 lang="en">Privacy policy</h1>
         </header>
 
-        <h2>1. Co rozšíření dělá</h2>
-        <p>
-          Trasy pro mapy.com ti umožňuje ukládat vlastní turistické, cyklistické
-          a pěší trasy nad mapou na
-          <a href="https://mapy.com" target="_blank" rel="noopener">mapy.com</a>
-          a volitelně je sdílet v malém komunitním poolu pro ostatní uživatele
-          rozšíření.
+        <h2 lang="cs">1. Správce osobních údajů</h2>
+        <h2 lang="en">1. Data controller</h2>
+        <p lang="cs">
+          Správcem osobních údajů ve smyslu nařízení (EU) 2016/679 (GDPR) je
+          fyzická osoba Jan Lounek, autor rozšíření Trasy pro mapy.com.
+          Kontaktní e-mail:
+          <a href="mailto:jan.lounek@etnetera.cz">jan.lounek@etnetera.cz</a>.
+          Rozšíření vzniklo jako nekomerční open-source projekt a není
+          provozováno na účet ani ve prospěch obchodní společnosti.
+        </p>
+        <p lang="en">
+          The data controller within the meaning of Regulation (EU) 2016/679
+          (GDPR) is Jan Lounek, the author of the Trasy pro mapy.com
+          extension, acting as a natural person. Contact email:
+          <a href="mailto:jan.lounek@etnetera.cz">jan.lounek@etnetera.cz</a>.
+          The extension is a non-commercial open-source project and is not
+          operated on behalf of or for the benefit of any company.
         </p>
 
-        <h2>2. Jaká data shromažďujeme</h2>
+        <h2 lang="cs">2. K čemu rozšíření slouží</h2>
+        <h2 lang="en">2. What the extension is for</h2>
+        <p lang="cs">
+          Rozšíření ti umožňuje ukládat, prohlížet a sdílet vlastní turistické
+          a cyklistické trasy nad mapou na
+          <a href="https://mapy.com" target="_blank" rel="noopener">mapy.com</a>.
+          Pro ukládání tras a sdílení s ostatními uživateli rozšíření je
+          potřeba přihlášení přes účet Seznam.
+        </p>
+        <p lang="en">
+          The extension lets you save, view, and share your own hiking and
+          cycling routes on top of the map at
+          <a href="https://mapy.com" target="_blank" rel="noopener">mapy.com</a>.
+          A Seznam account login is required to save routes and to share them
+          with other extension users.
+        </p>
 
-        <h3>Uložená lokálně na tvém počítači (<code>chrome.storage</code>)</h3>
-        <ul>
+        <h2 lang="cs">3. Účel a právní základ zpracování</h2>
+        <h2 lang="en">3. Purpose and legal basis</h2>
+        <p lang="cs">
+          Údaje zpracováváme pouze v rozsahu nezbytném pro fungování
+          rozšíření. Konkrétně:
+        </p>
+        <ul lang="cs">
           <li>
-            Tvoje trasy: název, popis, polyline souřadnice, vzdálenost, doba
-            trvání, výškový profil, typ trasy, obtížnost, parkování, složka,
-            připojené fotografie (zmenšené na ≤ 1200 px JPEG).
+            <strong>Plnění služby</strong> (čl. 6 odst. 1 písm. b GDPR) —
+            ukládání tvých tras, jejich zobrazení a synchronizace mezi
+            zařízeními, pokud si je explicitně sdílíš.
           </li>
-          <li>Názvy složek a stav jejich sbalení.</li>
           <li>
-            Tvůj Seznam <code>oauth_user_id</code> — stabilní, ale neprůhledný
-            identifikátor, který Seznam přidělí po přihlášení. Není to e-mail
-            ani jméno.
-          </li>
-          <li>
-            Tvůj Seznam <strong>OAuth přístupový a obnovovací token</strong>,
-            sloužící ke komunikaci s komunitním backendem.
+            <strong>Oprávněný zájem</strong> (čl. 6 odst. 1 písm. f GDPR) —
+            krátkodobé cachování ověřených OAuth tokenů na backendu (≤ 60
+            sekund), aby se opakované požadavky nemusely ověřovat u Seznamu
+            znovu a znovu.
           </li>
         </ul>
-        <p>
-          Lokální data nikdy neopustí tvůj počítač, dokud explicitně
-          nepovolíš sdílení (viz dále).
+        <p lang="en">
+          We process data only to the extent necessary to run the extension.
+          In particular:
         </p>
-
-        <h3>Odeslané na komunitní backend, když sdílíš trasu</h3>
-        <p>
-          Backend rozšíření běží jako Cloudflare Worker na
-          <code>mapy-for-chrome-backend.trasypromapy.workers.dev</code>. Když
-          v editaci trasy zaškrtneš
-          <strong>Sdílet s komunitou</strong> a uložíš, nahrávají se:
-        </p>
-        <ul>
+        <ul lang="en">
           <li>
-            Tvůj <code>oauth_user_id</code> (jako ID majitele — používá se
-            pro kontrolu vlastnictví).
+            <strong>Performance of the service</strong> (Art. 6(1)(b) GDPR) —
+            storing your routes, displaying them, and synchronising them
+            between devices when you explicitly share a route.
           </li>
           <li>
-            Název trasy, popis, typ, obtížnost, příznak parkování.
-          </li>
-          <li>
-            Geometrie trasy, souřadnice startu / cíle a jejich reverzně
-            geokódované popisky.
-          </li>
-          <li>
-            Vzdálenost, doba trvání, převýšení nahoru / dolů, výškový profil,
-            charakter trasy.
-          </li>
-          <li>
-            Počet hodnocení „líbí" / „nelíbí" na trasu (pouze agregát).
+            <strong>Legitimate interest</strong> (Art. 6(1)(f) GDPR) —
+            short-term caching of verified OAuth tokens on the backend (≤ 60
+            seconds) so that repeated requests don't have to be re-verified
+            against Seznam every time.
           </li>
         </ul>
-        <p><strong>Záměrně NENAHRÁVÁME, NEUKLÁDÁME ani NESDÍLÍME:</strong></p>
-        <ul>
-          <li>Tvoje skutečné jméno (křestní, příjmení).</li>
+
+        <h2 lang="cs">4. Údaje zpracovávané lokálně v prohlížeči</h2>
+        <h2 lang="en">4. Data processed locally in the browser</h2>
+        <p lang="cs">
+          Tyto údaje jsou uložené v úložišti rozšíření v Chrome
+          (<code>chrome.storage.local</code> a <code>chrome.storage.session</code>)
+          a nikdy je nepřenášíme na žádný server, dokud explicitně nepovolíš
+          sdílení trasy:
+        </p>
+        <ul lang="cs">
+          <li>
+            Tvoje trasy — název, popis, geometrie (polyline souřadnice),
+            vzdálenost, doba trvání, převýšení, výškový profil, typ trasy,
+            obtížnost, příznak parkování, složka, připojené fotografie
+            (zmenšené na maximálně 1000 px, JPEG, bez EXIF).
+          </li>
+          <li>Složky a stav jejich sbalení.</li>
+          <li>Nastavení filtru a stav panelů (otevřený / zavřený).</li>
+          <li>
+            Tvůj <code>oauth_user_id</code> ze Seznamu — neprůhledný stabilní
+            identifikátor, který Seznam vrátí po přihlášení. Nejedná se
+            o e-mail ani jméno.
+          </li>
+          <li>
+            OAuth přístupový a obnovovací token Seznamu. Tokeny jsou uloženy
+            v <code>chrome.storage.session</code>, tedy pouze v paměti — po
+            zavření prohlížeče se ztratí a musíš se přihlásit znovu.
+          </li>
+          <li>
+            Cache stažených komunitních tras (kvůli rychlému zobrazení i bez
+            internetu).
+          </li>
+        </ul>
+        <p lang="en">
+          The following data is stored in the extension's Chrome storage
+          (<code>chrome.storage.local</code> and
+          <code>chrome.storage.session</code>) and never leaves your computer
+          unless you explicitly share a route:
+        </p>
+        <ul lang="en">
+          <li>
+            Your routes — name, description, geometry (polyline coordinates),
+            distance, duration, elevation gain and loss, elevation profile,
+            route type, difficulty, parking flag, folder, attached photos
+            (resized to at most 1000 px, JPEG, EXIF stripped).
+          </li>
+          <li>Folders and their collapsed/expanded state.</li>
+          <li>Filter settings and the open/closed state of the side panels.</li>
+          <li>
+            Your <code>oauth_user_id</code> from Seznam — an opaque, stable
+            identifier returned by Seznam after sign-in. It is not your email
+            or name.
+          </li>
+          <li>
+            Seznam OAuth access and refresh tokens. Tokens are stored in
+            <code>chrome.storage.session</code> (memory only) — they are
+            wiped when the browser closes and you have to sign in again.
+          </li>
+          <li>
+            A cache of downloaded community routes (so they display quickly
+            and work offline).
+          </li>
+        </ul>
+
+        <h2 lang="cs">5. Údaje zpracovávané na serveru (backend)</h2>
+        <h2 lang="en">5. Data processed on the server (backend)</h2>
+        <p lang="cs">
+          Backend rozšíření běží jako Cloudflare Worker na adrese
+          <code>mapy-for-chrome-backend.trasypromapy.workers.dev</code>.
+          Slouží výhradně pro sdílení tras mezi uživateli rozšíření. Data se
+          ukládají v databázi Cloudflare D1 (SQLite). Když v editaci trasy
+          zaškrtneš <strong>Sdílet s komunitou</strong> a uložíš, na backend
+          se odešle:
+        </p>
+        <ul lang="cs">
+          <li>
+            Tvůj <code>oauth_user_id</code> jako identifikátor vlastníka
+            trasy (slouží pouze pro kontrolu, kdo má právo trasu upravit nebo
+            smazat).
+          </li>
+          <li>Název trasy, popis a typ trasy.</li>
+          <li>Obtížnost a příznak parkování u startu.</li>
+          <li>
+            Geometrie trasy (polyline), souřadnice startu a cíle a jejich
+            zpětně geokódovaná textová označení (například „Grünau im
+            Almtal, Rakousko").
+          </li>
+          <li>
+            Vzdálenost, doba trvání, převýšení nahoru/dolů, výškový profil
+            (až 100 bodů) a charakter trasy (okruh / tam-a-zpět /
+            jednosměrná).
+          </li>
+          <li>Veřejný odkaz na mapy.com pro otevření trasy.</li>
+        </ul>
+        <p lang="cs">
+          Při hlasování (líbí / nelíbí) na cizí trase se uloží:
+        </p>
+        <ul lang="cs">
+          <li>
+            Tvůj <code>oauth_user_id</code> a ID trasy, na které hlasuješ —
+            výhradně proto, abychom mohli vynutit pravidlo „jeden hlas na
+            uživatele na trasu". Žádný jiný uživatel nevidí, kdo pro co
+            hlasoval.
+          </li>
+        </ul>
+        <p lang="cs">
+          <strong>Záměrně neukládáme ani neodesíláme:</strong>
+        </p>
+        <ul lang="cs">
+          <li>Tvoje jméno ani příjmení.</li>
           <li>Tvoji e-mailovou adresu.</li>
           <li>
-            Tvoji IP adresu (mimo to, co potřebuje Cloudflare na úrovni edge
-            pro směrování požadavku — což my nelogujeme ani neukládáme).
+            Tvoji IP adresu nad rámec toho, co dočasně zpracovává Cloudflare
+            edge pro směrování síťových požadavků — sami IP adresy nelogujeme
+            ani neukládáme.
           </li>
-          <li>Tvoje fotografie (synchronizace fotek není zatím spuštěna).</li>
-          <li>Žádnou z tvých tras, kterou jsi neoznačil jako sdílenou.</li>
+          <li>Tvoje fotografie — fotky zůstávají pouze lokálně v prohlížeči.</li>
+          <li>Trasy, které jsi explicitně neoznačil jako sdílené.</li>
+        </ul>
+        <p lang="en">
+          The backend runs as a Cloudflare Worker at
+          <code>mapy-for-chrome-backend.trasypromapy.workers.dev</code>. Its
+          sole purpose is to share routes between extension users. Data is
+          stored in a Cloudflare D1 (SQLite) database. When you tick
+          <strong>Sdílet s komunitou</strong> in a route's edit form and
+          save, the following data is sent to the backend:
+        </p>
+        <ul lang="en">
+          <li>
+            Your <code>oauth_user_id</code> as the owner identifier (used
+            only to check who is allowed to edit or delete the route).
+          </li>
+          <li>The route's name, description, and route type.</li>
+          <li>Difficulty and a flag for whether the start has parking.</li>
+          <li>
+            Route geometry (polyline), start and end coordinates, and their
+            reverse-geocoded labels (e.g. "Grünau im Almtal, Austria").
+          </li>
+          <li>
+            Distance, duration, ascent and descent, elevation profile (up to
+            100 sample points), and the shape of the route (loop /
+            out-and-back / one-way).
+          </li>
+          <li>A public mapy.com link that opens the route.</li>
+        </ul>
+        <p lang="en">When you vote (like / dislike) on someone else's route:</p>
+        <ul lang="en">
+          <li>
+            Your <code>oauth_user_id</code> and the route ID are stored — for
+            the sole purpose of enforcing the "one vote per user per route"
+            rule. No other user can see who voted for what.
+          </li>
+        </ul>
+        <p lang="en"><strong>We deliberately do NOT store or send:</strong></p>
+        <ul lang="en">
+          <li>Your first or last name.</li>
+          <li>Your email address.</li>
+          <li>
+            Your IP address beyond what Cloudflare's edge handles transiently
+            for routing — we do not log or store IP addresses ourselves.
+          </li>
+          <li>Your photos — photos stay locally in the browser only.</li>
+          <li>
+            Any route you have not explicitly marked as shared.
+          </li>
         </ul>
 
-        <h3>Co Seznam vrátí při přihlášení</h3>
-        <p>
-          Když se přihlašuješ přes Seznam, OAuth scope <code>identity</code>
-          vrátí <code>oauth_user_id</code>, <code>email</code>,
-          <code>firstname</code>, <code>lastname</code>. Rozšíření čte jen
-          <code>oauth_user_id</code> a ostatní pole okamžitě zahazuje —
-          nikdy nejsou uložená na disk, odeslaná na backend ani zobrazená
-          v UI.
+        <h2 lang="cs">6. Co Seznam vrací při přihlášení</h2>
+        <h2 lang="en">6. What Seznam returns at sign-in</h2>
+        <p lang="cs">
+          Při OAuth přihlášení Seznam s rozsahem (scope)
+          <code>identity</code> vrací <code>oauth_user_id</code>, e-mailovou
+          adresu, jméno a příjmení. Rozšíření čte pouze
+          <code>oauth_user_id</code>. Ostatní pole z odpovědi okamžitě
+          zahazuje — nikdy se neukládají na disk, neposílají se na backend
+          ani se nezobrazují v rozhraní.
+        </p>
+        <p lang="en">
+          During OAuth sign-in, Seznam returns <code>oauth_user_id</code>,
+          email address, first name, and last name (the <code>identity</code>
+          scope). The extension reads only <code>oauth_user_id</code>. The
+          other fields in the response are discarded immediately — they are
+          never stored on disk, sent to the backend, or displayed in the
+          user interface.
         </p>
 
-        <h2>3. Co ostatní vidí o tobě</h2>
-        <p>
-          Když si jiný uživatel nainstaluje rozšíření a prohlíží komunitní
-          sekci, uvidí trasy, které jsi výslovně sdílel. Vidí:
+        <h2 lang="cs">7. Co o tobě vidí ostatní uživatelé</h2>
+        <h2 lang="en">7. What other users see about you</h2>
+        <p lang="cs">
+          Pokud si jiný uživatel nainstaluje rozšíření a prohlíží sekci
+          „Komunitní trasy", uvidí pouze trasy, které jsi výslovně sdílel,
+          a u nich:
         </p>
-        <ul>
+        <ul lang="cs">
+          <li>Název, popis, typ trasy, obtížnost a parkování.</li>
+          <li>Geometrii trasy a statistiky.</li>
+          <li>Počet hodnocení „líbí" a „nelíbí" (pouze agregát).</li>
           <li>
-            Název trasy, popis, statistiky, geometrii, fotografie (až budou
-            podporovány).
+            Anonymní označení vlastníka („Sdíleno komunitou"). Žádné jméno
+            ani identifikátor, který by umožnil propojit více tras stejného
+            autora.
           </li>
-          <li>
-            Anonymní odkaz na majitele („Sdíleno komunitou"). <strong
-              >Žádné skutečné jméno.</strong
-            >
-          </li>
-          <li>Počet hodnocení.</li>
         </ul>
-        <p>
-          Pokud hlasuješ na cizí trase, tvůj <code>oauth_user_id</code> se
-          uloží do tabulky <code>route_votes</code>, abychom mohli vynutit
-          jeden hlas na uživatele. Žádný jiný uživatel nevidí, kdo pro co
-          hlasoval.
+        <p lang="en">
+          When another user installs the extension and looks at the
+          "Komunitní trasy" section, they only see routes you have explicitly
+          shared, with the following fields:
         </p>
+        <ul lang="en">
+          <li>Name, description, route type, difficulty, and parking flag.</li>
+          <li>Route geometry and statistics.</li>
+          <li>Like and dislike counts (aggregate only).</li>
+          <li>
+            An anonymous owner label ("Sdíleno komunitou" / "Shared by the
+            community"). No name, and no identifier that would let anyone
+            link several routes to the same author.
+          </li>
+        </ul>
 
-        <h2>4. Kde data žijí</h2>
-        <ul>
+        <h2 lang="cs">8. Kde data fyzicky leží</h2>
+        <h2 lang="en">8. Where the data physically resides</h2>
+        <ul lang="cs">
           <li>
-            <strong>Lokálně:</strong> v úložišti rozšíření v Chrome na tvém
-            počítači.
+            <strong>Lokální data</strong> — v úložišti rozšíření Chrome na
+            tvém zařízení.
           </li>
           <li>
-            <strong>Backend:</strong> v Cloudflare D1 databázi (SQLite)
-            spravované vývojářem.
+            <strong>Backend data</strong> — v databázi Cloudflare D1, kterou
+            spravuje vývojář rozšíření. Cloudflare provozuje datová centra
+            celosvětově; konkrétní region D1 databáze je
+            <em>Western Europe (WEUR)</em>.
           </li>
           <li>
-            <strong>Seznam:</strong> když se přihlašuješ, Seznam zpracovává
-            svá vlastní data podle svých zásad:
-            <a
+            <strong>Seznam OAuth</strong> — Seznam.cz, a.s. zpracovává údaje
+            související s přihlášením podle vlastních zásad ochrany osobních
+            údajů
+            (<a
               href="https://o.seznam.cz/ochrana-udaju/"
               target="_blank"
               rel="noopener"
               >o.seznam.cz/ochrana-udaju</a
+            >). Rozšíření je vůči Seznamu OAuth klientem.
+          </li>
+          <li>
+            <strong>Mapy.com</strong> — API společnosti Seznam, které
+            rozšíření používá pro výpočet trasy, dobu trvání, výškový profil
+            a zpětné geokódování. Při těchto požadavcích se na Mapy.com
+            posílají jen souřadnice bodů, žádné identifikační údaje uživatele.
+          </li>
+        </ul>
+        <ul lang="en">
+          <li>
+            <strong>Local data</strong> — in the extension's Chrome storage
+            on your device.
+          </li>
+          <li>
+            <strong>Backend data</strong> — in a Cloudflare D1 database
+            managed by the extension's author. Cloudflare runs data centres
+            worldwide; the specific D1 region for this database is
+            <em>Western Europe (WEUR)</em>.
+          </li>
+          <li>
+            <strong>Seznam OAuth</strong> — Seznam.cz, a.s. processes data
+            related to sign-in under its own privacy policy
+            (<a
+              href="https://o.seznam.cz/ochrana-udaju/"
+              target="_blank"
+              rel="noopener"
+              >o.seznam.cz/ochrana-udaju</a
+            >). The extension is an OAuth client to Seznam.
+          </li>
+          <li>
+            <strong>Mapy.com</strong> — Seznam's API, used by the extension
+            for route computation, duration, elevation profile, and reverse
+            geocoding. These requests carry only the coordinates of route
+            points — no user identifiers.
+          </li>
+        </ul>
+
+        <h2 lang="cs">9. Doba uchování</h2>
+        <h2 lang="en">9. Retention period</h2>
+        <ul lang="cs">
+          <li>
+            <strong>Lokální data</strong> zůstávají, dokud rozšíření
+            neodinstaluješ nebo nevymažeš jeho úložiště v Chrome.
+          </li>
+          <li>
+            <strong>Sdílené trasy a hlasy na backendu</strong> zůstávají,
+            dokud trasu sám neoznačíš jako nesdílenou (zruší se i z backendu),
+            dokud trasu úplně nesmažeš v rozšíření, nebo dokud nepožádáš
+            o smazání e-mailem.
+          </li>
+          <li>
+            <strong>OAuth token cache na backendu</strong> má TTL maximálně
+            60 sekund. Po skončení platnosti se záznam automaticky odstraní.
+          </li>
+        </ul>
+        <ul lang="en">
+          <li>
+            <strong>Local data</strong> remains until you uninstall the
+            extension or clear its storage in Chrome.
+          </li>
+          <li>
+            <strong>Shared routes and votes on the backend</strong> remain
+            until you mark the route as not shared (which removes it from
+            the backend), until you delete the route in the extension, or
+            until you request deletion by email.
+          </li>
+          <li>
+            <strong>OAuth token cache on the backend</strong> has a TTL of
+            at most 60 seconds. Entries are removed automatically after
+            expiry.
+          </li>
+        </ul>
+
+        <h2 lang="cs">10. Třetí strany a zpracovatelé</h2>
+        <h2 lang="en">10. Third parties and processors</h2>
+        <p lang="cs">Rozšíření využívá tyto třetí strany:</p>
+        <ul lang="cs">
+          <li>
+            <strong>Cloudflare, Inc.</strong> — hosting backendu (Workers
+            + D1). Zpracovatel ve smyslu GDPR. Smluvní DPA Cloudflare
+            obsahuje standardní smluvní doložky pro převody mimo EU.
+          </li>
+          <li>
+            <strong>Seznam.cz, a.s.</strong> — poskytovatel OAuth přihlášení
+            a Mapy.com API. Vůči Seznamu vystupuje rozšíření jako klient.
+          </li>
+          <li>
+            <strong>GitHub, Inc.</strong> — hosting zdrojového kódu a této
+            webové stránky (GitHub Pages). Sám obsah stránky neobsahuje
+            sledovací skripty.
+          </li>
+        </ul>
+        <p lang="cs">
+          Žádné jiné třetí strany (analytika, reklama, telemetrie, CDN
+          fontů, externí písma) nepoužíváme.
+        </p>
+        <p lang="en">The extension uses the following third parties:</p>
+        <ul lang="en">
+          <li>
+            <strong>Cloudflare, Inc.</strong> — backend hosting (Workers
+            + D1). A processor under GDPR. Cloudflare's DPA includes
+            standard contractual clauses for non-EU data transfers.
+          </li>
+          <li>
+            <strong>Seznam.cz, a.s.</strong> — OAuth identity provider and
+            Mapy.com API provider. The extension acts as a client to Seznam.
+          </li>
+          <li>
+            <strong>GitHub, Inc.</strong> — source-code hosting and this
+            website (GitHub Pages). The site itself contains no tracking
+            scripts.
+          </li>
+        </ul>
+        <p lang="en">
+          No other third parties (analytics, advertising, telemetry, font
+          CDNs, external fonts) are used.
+        </p>
+
+        <h2 lang="cs">11. Zabezpečení</h2>
+        <h2 lang="en">11. Security</h2>
+        <ul lang="cs">
+          <li>
+            Veškerá komunikace mezi rozšířením, backendem, Seznamem a Mapy.com
+            probíhá přes HTTPS.
+          </li>
+          <li>
+            OAuth obnovovací token je uložen pouze v paměti
+            (<code>chrome.storage.session</code>) — po zavření prohlížeče
+            zmizí. Útočník s přístupem k tvému profilu Chrome na disku
+            nemůže získat dlouhodobý OAuth token.
+          </li>
+          <li>
+            Backend přijímá CORS požadavky pouze z origin
+            <code>chrome-extension://flfeambpmngmpboddgcdigbomliepodm</code>.
+          </li>
+          <li>
+            Rozšíření má pinovaný identifikátor (manifest <code>key</code>),
+            takže nainstalovaná verze z Chrome Web Store i lokální
+            vývojářská verze sdílí stejné ID.
+          </li>
+        </ul>
+        <ul lang="en">
+          <li>
+            All communication between the extension, the backend, Seznam,
+            and Mapy.com happens over HTTPS.
+          </li>
+          <li>
+            The OAuth refresh token is kept in memory only
+            (<code>chrome.storage.session</code>) — it disappears when the
+            browser closes. An attacker with file-system access to your
+            Chrome profile cannot lift a long-lived OAuth token.
+          </li>
+          <li>
+            The backend accepts CORS requests only from origin
+            <code>chrome-extension://flfeambpmngmpboddgcdigbomliepodm</code>.
+          </li>
+          <li>
+            The extension has a pinned identifier (manifest <code>key</code>),
+            so the Chrome Web Store version and a local developer build share
+            the same extension ID.
+          </li>
+        </ul>
+
+        <h2 lang="cs">12. Cookies a sledování</h2>
+        <h2 lang="en">12. Cookies and tracking</h2>
+        <p lang="cs">
+          Rozšíření ani tato webová stránka <strong>nepoužívají cookies</strong>,
+          žádnou analytiku (Google Analytics, Plausible, Matomo apod.),
+          žádný fingerprinting ani reklamní sítě. Webová stránka neobsahuje
+          embedované sledovací prvky třetích stran. Rozšíření ukládá nastavení
+          výhradně přes Chrome storage API.
+        </p>
+        <p lang="en">
+          Neither the extension nor this website uses
+          <strong>cookies</strong>, any analytics tools (Google Analytics,
+          Plausible, Matomo, etc.), any fingerprinting techniques, or
+          advertising networks. The website contains no embedded third-party
+          tracking. The extension stores preferences via the Chrome storage
+          API only.
+        </p>
+
+        <h2 lang="cs">13. Tvoje práva podle GDPR</h2>
+        <h2 lang="en">13. Your rights under GDPR</h2>
+        <p lang="cs">Podle GDPR máš ve vztahu k osobním údajům právo:</p>
+        <ul lang="cs">
+          <li>
+            <strong>na přístup</strong> ke svým údajům — celý lokální obsah
+            si můžeš prohlédnout přes Chrome DevTools v service workeru
+            rozšíření (<code>chrome://extensions/</code> → service worker →
+            Application → Storage). Údaje uložené na backendu ti na požádání
+            zašleme strojově čitelně.
+          </li>
+          <li>
+            <strong>na opravu</strong> nepřesných údajů — všechna pole svých
+            tras můžeš upravit přímo v rozšíření.
+          </li>
+          <li>
+            <strong>na výmaz („právo být zapomenut")</strong> — jednu trasu
+            odstraníš ze sdílení tak, že ji odznačíš jako sdílenou, nebo ji
+            úplně smažeš. Smazání všech dat z backendu si můžeš vyžádat
+            e-mailem na
+            <a href="mailto:jan.lounek@etnetera.cz">jan.lounek@etnetera.cz</a>
+            s uvedením svého <code>oauth_user_id</code>. Smazání proběhne
+            do 7 dnů.
+          </li>
+          <li>
+            <strong>na omezení zpracování</strong> — můžeš zrušit sdílení
+            všech svých tras a v rozšíření se odhlásit; další zpracování
+            potom probíhat nebude.
+          </li>
+          <li>
+            <strong>na přenositelnost</strong> — funkce „Stáhnout zálohu"
+            v rozšíření exportuje všechny tvoje trasy a složky do JSON.
+          </li>
+          <li>
+            <strong>vznést námitku</strong> proti zpracování založenému na
+            oprávněném zájmu.
+          </li>
+          <li>
+            <strong>podat stížnost</strong> u dozorového úřadu — Úřad pro
+            ochranu osobních údajů, Pplk. Sochora 27, 170 00 Praha 7,
+            <a
+              href="https://www.uoou.gov.cz"
+              target="_blank"
+              rel="noopener"
+              >uoou.gov.cz</a
             >.
           </li>
         </ul>
-
-        <h2>5. Doba uchování</h2>
-        <ul>
+        <p lang="cs">
+          Jak najít svůj <code>oauth_user_id</code>: otevři
+          <code>chrome://extensions/</code>, klikni u rozšíření na „service
+          worker", v záložce Console napiš
+          <code>chrome.storage.local.get('user').then(console.log)</code>.
+        </p>
+        <p lang="en">Under GDPR, you have the following rights:</p>
+        <ul lang="en">
           <li>
-            Lokální data zůstávají, dokud rozšíření neodinstaluješ nebo
-            nevymažeš úložiště rozšíření v Chrome.
+            <strong>Right of access</strong> — you can inspect all locally
+            stored data via Chrome DevTools on the extension's service
+            worker (<code>chrome://extensions/</code> → service worker →
+            Application → Storage). Backend data can be exported and sent to
+            you in a machine-readable format on request.
           </li>
           <li>
-            Backend data zůstávají, dokud trasu nezrušíš ze sdílení
-            (odznačíš
-            <em>Sdílet s komunitou</em> a uložíš) nebo trasu lokálně
-            nesmažeš — pak je odebrána i z backendu. Backend si také drží
-            krátkodobou cache ověřených OAuth tokenů (≤ 60 sekund), aby se
-            opakované požadavky neutloukly do Seznamu.
+            <strong>Right to rectification</strong> — every field of your
+            routes can be edited inside the extension.
           </li>
           <li>
-            Záznamy o hodnocení trvají, dokud existuje samotná trasa.
+            <strong>Right to erasure ("right to be forgotten")</strong> — a
+            single route is removed from the backend by unsharing it or by
+            deleting it. To delete all of your backend data, write to
+            <a href="mailto:jan.lounek@etnetera.cz">jan.lounek@etnetera.cz</a>
+            and include your <code>oauth_user_id</code>. Deletion is
+            performed within 7 days.
+          </li>
+          <li>
+            <strong>Right to restrict processing</strong> — you can unshare
+            every route and sign out of the extension; no further processing
+            takes place after that.
+          </li>
+          <li>
+            <strong>Right to data portability</strong> — the "Stáhnout
+            zálohu" feature exports all your routes and folders as JSON.
+          </li>
+          <li>
+            <strong>Right to object</strong> to processing based on
+            legitimate interest.
+          </li>
+          <li>
+            <strong>Right to lodge a complaint</strong> with a supervisory
+            authority. For the Czech Republic, this is the Office for
+            Personal Data Protection (Úřad pro ochranu osobních údajů),
+            Pplk. Sochora 27, 170 00 Prague 7,
+            <a
+              href="https://www.uoou.gov.cz"
+              target="_blank"
+              rel="noopener"
+              >uoou.gov.cz</a
+            >.
           </li>
         </ul>
-
-        <h2>6. Tvoje práva</h2>
-        <p>Kdykoliv můžeš:</p>
-        <ul>
-          <li>
-            <strong>Prohlédnout</strong> všechna lokálně uložená data přes
-            Chrome DevTools na service workeru rozšíření
-            (<code>chrome://extensions/</code> → service worker → záložka
-            Application → Storage).
-          </li>
-          <li>
-            <strong>Smazat jednu sdílenou trasu</strong> tak, že ji v editaci
-            odznačíš jako sdílenou, nebo trasu smažeš úplně.
-          </li>
-          <li>
-            <strong>Úplně přestat sdílet</strong> tak, že odznačíš sdílení
-            u každé trasy a v rozšíření se odhlásíš ze Seznamu.
-          </li>
-          <li>
-            <strong>Vyžádat smazání všech sdílených dat</strong> na e-mailu
-            <a href="mailto:jan.lounek@etnetera.cz"
-              >jan.lounek@etnetera.cz</a
-            >
-            s uvedením tvého <code>oauth_user_id</code> (viditelné v konzoli
-            service workeru rozšíření přes
-            <code>chrome.storage.local.get('user')</code>). Smažeme každou
-            trasu, hlas i cachovaný token vázaný na to ID do 7 dnů.
-          </li>
-        </ul>
-        <p>
-          Máš také práva podle GDPR (Nařízení EU 2016/679) včetně práva na
-          přístup, opravu, výmaz, přenositelnost dat a podání stížnosti
-          k Úřadu pro ochranu osobních údajů
-          (<a
-            href="https://www.uoou.gov.cz"
-            target="_blank"
-            rel="noopener"
-            >uoou.gov.cz</a
-          >).
+        <p lang="en">
+          How to find your <code>oauth_user_id</code>: open
+          <code>chrome://extensions/</code>, click "service worker" on the
+          extension's tile, and in the Console run
+          <code>chrome.storage.local.get('user').then(console.log)</code>.
         </p>
 
-        <h2>7. Co neděláme</h2>
-        <ul>
-          <li>Nezobrazujeme reklamy.</li>
-          <li>
-            Nepoužíváme analytické služby (žádný Google Analytics, Sentry,
-            fingerprinting).
-          </li>
-          <li>Neprodáváme ani nesdílíme data s třetími stranami.</li>
-          <li>
-            Nepoužíváme cookies — rozšíření ukládá vše přes Chrome storage
-            a OAuth tokeny přes standardní flow Seznamu.
-          </li>
-          <li>
-            Nesledujeme tvoje prohlížení mapy.com mimo to, co je nutné
-            k pozicování overlaye (čtení URL parametrů s polohou a zoomem).
-          </li>
-        </ul>
-
-        <h2>8. Děti</h2>
-        <p>
-          Rozšíření není určené dětem do 13 let. Vědomě neshromažďujeme
-          osobní údaje od dětí.
+        <h2 lang="cs">14. Děti</h2>
+        <h2 lang="en">14. Children</h2>
+        <p lang="cs">
+          Rozšíření není určeno dětem mladším 16 let. Vědomě
+          neshromažďujeme údaje od dětí. Pokud se domníváš, že nezletilý
+          uživatel sdílel trasu, napiš nám a údaje smažeme.
+        </p>
+        <p lang="en">
+          The extension is not intended for children under 16. We do not
+          knowingly collect data from children. If you believe a minor has
+          shared a route, please write to us and we will delete the data.
         </p>
 
-        <h2>9. Změny těchto zásad</h2>
-        <p>
-          Pokud podstatně změníme, jaká data se shromažďují nebo jak se
-          používají, aktualizuje se datum v záhlaví tohoto dokumentu
-          a vysvětlení se objeví v changelogu příslušné verze v Chrome Web
-          Store.
+        <h2 lang="cs">15. Změny tohoto dokumentu</h2>
+        <h2 lang="en">15. Changes to this document</h2>
+        <p lang="cs">
+          Pokud podstatně změníme, jaká data se zpracovávají nebo jak se
+          používají, aktualizujeme datum v záhlaví tohoto dokumentu
+          a zmínku o změně zveřejníme v changelogu příslušné verze
+          rozšíření v Chrome Web Store. Drobné jazykové úpravy nepředstavují
+          podstatnou změnu.
+        </p>
+        <p lang="en">
+          If we materially change what data is processed or how it is used,
+          we will update the date in this document's header and announce
+          the change in the changelog of the corresponding extension release
+          on the Chrome Web Store. Minor wording changes are not a material
+          change.
         </p>
 
-        <h2>10. Kontakt</h2>
-        <p>
+        <h2 lang="cs">16. Kontakt</h2>
+        <h2 lang="en">16. Contact</h2>
+        <p lang="cs">
           Jan Lounek<br />
           E-mail:
-          <a href="mailto:jan.lounek@etnetera.cz"
-            >jan.lounek@etnetera.cz</a
-          >
+          <a href="mailto:jan.lounek@etnetera.cz">jan.lounek@etnetera.cz</a>
+        </p>
+        <p lang="en">
+          Jan Lounek<br />
+          Email:
+          <a href="mailto:jan.lounek@etnetera.cz">jan.lounek@etnetera.cz</a>
         </p>
       </article>
     </main>
@@ -285,10 +703,34 @@
     <footer class="footer">
       <div class="footer-inner">
         <p>
-          <a href="index.html">Zpět na hlavní stránku</a> ·
-          <a href="mailto:jan.lounek@etnetera.cz">Kontakt</a>
+          <a href="index.html"
+            ><span lang="cs">Zpět na hlavní stránku</span
+            ><span lang="en">Back to home</span></a
+          >
+          ·
+          <a href="terms.html"
+            ><span lang="cs">Podmínky používání</span
+            ><span lang="en">Terms of use</span></a
+          >
+          ·
+          <a href="mailto:jan.lounek@etnetera.cz"
+            ><span lang="cs">Kontakt</span><span lang="en">Contact</span></a
+          >
         </p>
       </div>
     </footer>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var btn = document.getElementById('lang-switch');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          var html = document.documentElement;
+          var next = html.lang === 'cs' ? 'en' : 'cs';
+          html.lang = next;
+          try { localStorage.setItem('mfc-lang', next); } catch (e) {}
+        });
+      });
+    </script>
   </body>
 </html>
