@@ -7,7 +7,7 @@ Jan Lounek (the "developer"). This page explains what information the
 extension collects, where it goes, and how to remove it.
 
 If you want your data deleted or have any question, contact
-**jan.lounek@etnetera.cz**.
+**honzalounek@gmail.com**.
 
 ## 1. What the extension does
 
@@ -103,7 +103,7 @@ You can at any time:
 - **Stop sharing entirely** by unsharing each of your shared routes and
   signing out of Seznam in the extension.
 - **Delete all your shared data on request** by emailing
-  jan.lounek@etnetera.cz with your `oauth_user_id` (visible in the extension's
+  honzalounek@gmail.com with your `oauth_user_id` (visible in the extension's
   service worker console via `chrome.storage.local.get('user')`). We will
   remove every route, vote, and cached token tied to that ID within 7 days.
 
@@ -137,4 +137,4 @@ explanation will appear in the Chrome Web Store change log for that release.
 ## 10. Contact
 
 Jan Lounek
-Email: jan.lounek@etnetera.cz
+Email: honzalounek@gmail.com
