@@ -428,7 +428,9 @@ function runProbe(force = false): void {
     );
   });
   if (plausible.length === 0) {
-    if (force) postToContent('probeDone', { ok: false, reason: 'no_plausible' });
+    // No probeDone here: pollForceProbe (or the caller's own timeout) signals
+    // failure when polling actually gives up, so we don't pre-emptively tell
+    // the content script "nothing here" during a single iteration.
     return;
   }
   const best = plausible[0]; // longest-first
@@ -449,12 +451,37 @@ function runProbe(force = false): void {
   };
   console.log(TAG, `using ${best.path} (${best.coords.length} pts) as captured route`);
   postToContent('captured', lastCaptured);
-  if (force) postToContent('probeDone', { ok: true, points: best.coords.length });
 }
 
 // Expose for manual debugging from DevTools: __mfcProbe()
 if (import.meta.env.DEV) {
-  (window as unknown as { __mfcProbe?: () => void }).__mfcProbe = runProbe;
+  (window as unknown as { __mfcProbe?: () => void }).__mfcProbe = () => runProbe(false);
+}
+
+/**
+ * Poll the page memory until runProbe successfully captures a route or we hit
+ * the deadline. Used by the import-button path so the user doesn't have to
+ * guess when mapy.com has finished rendering the new route after SPA
+ * navigation. Stops the moment runProbe sets lastCaptured (the captured
+ * message is what the content script awaits).
+ */
+async function pollForceProbe(): Promise<void> {
+  const DEADLINE_MS = 4000;
+  const INTERVAL_MS = 220;
+  const startedAt = Date.now();
+  const startedPageUrl = location.href;
+  while (Date.now() - startedAt < DEADLINE_MS) {
+    // If the user navigated *again* while we were polling, abandon — the next
+    // navigation will kick off its own probes.
+    if (location.href !== startedPageUrl) {
+      postToContent('probeDone', { ok: false, reason: 'navigated_during_probe' });
+      return;
+    }
+    runProbe(true);
+    if (lastCaptured) return; // runProbe already posted `captured` + `probeDone`
+    await new Promise((r) => setTimeout(r, INTERVAL_MS));
+  }
+  postToContent('probeDone', { ok: false, reason: 'timeout' });
 }
 
 // ---- fetch hook ----
@@ -578,9 +605,11 @@ window.addEventListener('message', (e: MessageEvent) => {
   }
   if (d.type === 'forceProbe') {
     // Reset the buffered capture so the "longest wins" guard inside runProbe
-    // doesn't keep a stale polyline from before the user navigated.
+    // doesn't keep a stale polyline from before the user navigated, then poll
+    // until a viewport-matching route appears in mapy.com's JS memory or we
+    // hit the deadline.
     lastCaptured = null;
-    runProbe(true);
+    void pollForceProbe();
   }
   if (d.type === 'probeDebug') {
     const w = window as unknown as Record<string, unknown>;
@@ -607,9 +636,13 @@ setTimeout(runProbe, 20000);
 function onNavigation(): void {
   // Reset the "longest wins" guard so a new route can replace the old one.
   lastCaptured = null;
-  setTimeout(runProbe, 800);
-  setTimeout(runProbe, 2500);
-  setTimeout(runProbe, 6000);
+  // Tell the content script to drop its cached importable — otherwise the
+  // import button would still show a "Importovat aktuální trasu (N pts)" label
+  // for the previously-viewed route until the next probe succeeds.
+  postToContent('navigated', { pageUrl: location.href });
+  setTimeout(() => runProbe(false), 800);
+  setTimeout(() => runProbe(false), 2500);
+  setTimeout(() => runProbe(false), 6000);
 }
 const origPush = history.pushState.bind(history);
 const origReplace = history.replaceState.bind(history);

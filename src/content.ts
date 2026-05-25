@@ -1619,20 +1619,22 @@ async function importCurrentRouteFresh(): Promise<void> {
     btn.innerHTML = `${ICON.download}<span>Načítám aktuální trasu…</span>`;
   }
   try {
-    const fresh = await requestFreshCapture(2500);
+    // Slightly longer than main-world's 4s deadline so the message round-trip
+    // can complete cleanly.
+    const fresh = await requestFreshCapture(4500);
     if (fresh && fresh.points.length >= 2) {
-      // requestFreshCapture also writes to state.importable via the existing
-      // 'captured' message path, so importCurrentRoute reads the fresh value.
+      // The 'captured' message path already wrote state.importable, so
+      // importCurrentRoute reads the fresh value.
       importCurrentRoute();
       return;
     }
-    // Fallback: if the force-probe didn't find anything (e.g. mapy.com hasn't
-    // populated window.Mapy yet), use whatever was already buffered.
-    if (state.importable && state.importable.points.length >= 2) {
-      importCurrentRoute();
-      return;
-    }
-    alert('Trasa se nepodařilo načíst. Zkus stránku obnovit (Ctrl+R) a importovat znovu.');
+    // We deliberately do NOT fall back to state.importable here: when the
+    // forced probe couldn't find a viewport-matching route, anything still
+    // buffered is from a previously-viewed route and importing it produces
+    // exactly the "imported wrong route" bug we're trying to fix.
+    alert(
+      'Trasa se nepodařilo načíst z mapy.com. Počkej, až se trasa plně načte (vidíš ji na mapě?), a zkus to znovu. Pokud to nepomůže, obnov stránku (Ctrl+R).'
+    );
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -3206,6 +3208,13 @@ function watchMainWorld(): void {
       // Validate the payload before accepting it.
       const captured = validateCapturedPayload(d.data);
       state.importable = captured;
+      rerenderPanel();
+    } else if (d.type === 'navigated') {
+      // mapy.com SPA navigation happened — the previously-buffered importable
+      // belongs to a route the user is no longer looking at. Drop it so the
+      // import button doesn't claim to import the old route while the new
+      // route hasn't loaded into JS memory yet.
+      state.importable = null;
       rerenderPanel();
     }
   });
